@@ -1,0 +1,20 @@
+{
+    "name": "dantleech/code-mover",
+    "description": "Code Migration Library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "dantleech",
+            "email": "daniel@dantleech.com"
+        }
+    ],
+    "require": {
+        "doctrine/collections": "dev-master"
+    },
+    "autoload": {
+        "psr-0": { "": "src" }
+    },
+    "config": {
+        "github-protocols": ["https"]
+    }
+}

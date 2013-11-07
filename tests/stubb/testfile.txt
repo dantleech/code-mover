@@ -1,0 +1,11 @@
+<?php
+
+namespace FooBar;
+
+echo "This is some test file alright.";
+
+$foo = new Thing;
+$foo->setOption('asd', 'dsa');
+$foo->setOption('dsa', 'asd');
+
+exit(1);
