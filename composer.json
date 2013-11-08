@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "doctrine/collections": "dev-master"
+        "doctrine/collections": "~1.1"
     },
     "autoload": {
         "psr-0": { "": "src" }
