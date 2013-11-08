@@ -9,12 +9,25 @@ class MoverFile extends ArrayCollection
 {
     protected $_initialized = false;
     protected $file;
+    protected $private;
     protected $lines;
+    protected $originalFile;
 
     public function __construct($file)
     {
         $this->lines = new ArrayCollection();
         $this->file = $file;
+    }
+
+    public function getLines()
+    {
+        $this->init();
+        return $this->lines;
+    }
+
+    public function nameMatches($pattern)
+    {
+        return (boolean) preg_match($pattern, $this->file);
     }
 
     public function init()
@@ -23,42 +36,65 @@ class MoverFile extends ArrayCollection
             return;
         }
 
-        foreach (file($this->file) as $fileLine) {
+        $this->originalFile = file($this->file);
+        foreach ($this->originalFile as $fileLine) {
             $this->lines->add(new MoverLine($this, $fileLine));
         }
 
-        $this->initialized = true;
+        $this->_initialized = true;
     }
 
     public function findLine($pattern)
     {
-        $this->init();
-
-        $line = $this->lines->current();
-
-        while ($line) {
+        foreach ($this->getLines() as $line) {
             if ($line->match($pattern)) {
                 return $line;
             }
-            $line = $this->lines->next();
         }
 
         return null;
     }
 
-    public function findLines($pattern)
+    public function findLines($patterns)
     {
-        $this->init();
+        $patterns = (array) $patterns;
 
-        $lines = $this->lines->filter(function ($line) use ($pattern) {
-            return $line->match($pattern);
+        $lines = $this->getLines()->filter(function ($line) use ($patterns) {
+            $match = false;
+            foreach ($patterns as $pattern) {
+                if ($line->match($pattern)) {
+                    $match = true;
+                    break;
+                }
+            }
+
+            return $match;
         });
 
         return $lines;
     }
 
-    public function getLines()
+    public function dump()
     {
-        return $this->lines;
+        return implode("", $this->getLines()->toArray());
+    }
+
+    public function getOriginalFile()
+    {
+        return $this->originalFile;
+    }
+
+    public function commit()
+    {
+        $this->originalFile = $this->lines->toArray();
+    }
+
+    public function isModified()
+    {
+        if ($this->originalFile == $this->lines->toArray()) {
+            return false;
+        }
+
+        return true;
     }
 }

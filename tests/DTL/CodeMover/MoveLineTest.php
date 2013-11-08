@@ -16,9 +16,9 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
     public function provideMatch()
     {
         return array(
-            array('namespace Foo', 'namespace', true),
-            array('namespace Foo', '.*namespace.*Foo', true),
-            array('foobar', '.*namespace', false),
+            array('namespace Foo', '/namespace/', true),
+            array('namespace Foo', '/.*namespace.*Foo/', true),
+            array('foobar', '/.*namespace/', false),
         );
     }
 
@@ -31,5 +31,21 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
         $res = $line->match($pattern);
         $this->assertEquals($isMatch, $res);
     }
-}
 
+    public function provideReplace()
+    {
+        return array(
+            array('The quick brown fox', '/fox/', 'bear', 'The quick brown bear'),
+        );
+    }
+
+    /**
+     * @dataProvider provideReplace
+     */
+    public function testReplace($line, $pattern, $replacement, $expected)
+    {
+        $line = new MoverLine($this->moverFile, $line);
+        $line->replace($pattern, $replacement);
+        $this->assertEquals($expected, (string) $line);
+    }
+}

@@ -12,11 +12,17 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
         $this->file = new MoverFile($testFile);
     }
 
+    public function testNameMatches()
+    {
+        $this->assertTrue($this->file->nameMatches('/testfile/'));
+        $this->assertFalse($this->file->nameMatches('/bahfile/'));
+    }
+
     public function provideFindLine()
     {
         return array(
-            array('namespace', true, 3),
-            array('echo \".*\"', true, 5),
+            array('/namespace/', true, 3),
+            array('/echo \".*\"/', true, 5),
         );
     }
 
@@ -39,8 +45,8 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
     public function provideFindLines()
     {
         return array(
-            array('setOption', 2),
-            array('thislinedoesnotexist', 0),
+            array('/setOption/', 2),
+            array('/thislinedoesnotexist/', 0),
         );
     }
 
