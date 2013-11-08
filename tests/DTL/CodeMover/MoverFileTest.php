@@ -52,10 +52,15 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider provideFindLines
+     * @depends testFindLine
      */
     public function testFindLines($pattern, $nbLines)
     {
+        // find first
+        $firstLine = $this->file->findLine($pattern);
+
         $coll = $this->file->findLines($pattern);
         $this->assertEquals($nbLines, $coll->count());
+        $this->assertSame($firstLine, $coll[0]);
     }
 }

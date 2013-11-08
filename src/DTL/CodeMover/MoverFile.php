@@ -59,19 +59,17 @@ class MoverFile extends ArrayCollection
     {
         $patterns = (array) $patterns;
 
-        $lines = $this->getLines()->filter(function ($line) use ($patterns) {
-            $match = false;
+        $lines = array();
+        foreach ($this->getLines() as $line) {
             foreach ($patterns as $pattern) {
                 if ($line->match($pattern)) {
-                    $match = true;
+                    $lines[] = $line;
                     break;
                 }
             }
+        }
 
-            return $match;
-        });
-
-        return $lines;
+        return new ArrayCollection($lines);
     }
 
     public function dump()
@@ -86,7 +84,10 @@ class MoverFile extends ArrayCollection
 
     public function commit()
     {
-        $this->originalFile = $this->lines->toArray();
+        $this->originalFile = array();
+        foreach ($this->lines as $line) {
+            $this->originalFile[] = $line->getLine();
+        }
     }
 
     public function isModified()

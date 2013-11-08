@@ -36,6 +36,11 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             array('The quick brown fox', '/fox/', 'bear', 'The quick brown bear'),
+            array('The quick brown fox', array('/dabd/', '/fox/'), 'bear', 'The quick brown bear'),
+            array('The quick brown fox', array('/dabd/', '/fox/'), 'bear', 'The quick brown bear'),
+            array('The quick brown fox', '/quick (.*) fox/', function ($matches) {
+                return 'slow '.$matches[1].' elephant';
+            }, 'The slow brown elephant'),
         );
     }
 

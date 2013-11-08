@@ -27,7 +27,13 @@ class MoverLine
 
     public function replace($pattern, $replacement)
     {
-        $this->line = preg_replace($pattern, $replacement, $this->line);
+        if ($replacement instanceof \Closure) {
+            $this->line = preg_replace_callback($pattern, $replacement, $this->line);
+        } else {
+            $this->line = preg_replace($pattern, $replacement, $this->line);
+        }
+
+        return $this;
     }
 
     public function getLine()
