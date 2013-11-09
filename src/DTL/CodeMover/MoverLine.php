@@ -4,6 +4,8 @@ namespace DTL\CodeMover;
 
 class MoverLine
 {
+    const REGEX_DELIMITER = '/';
+
     protected $file;
     protected $originalLine;
     protected $line;
@@ -15,9 +17,19 @@ class MoverLine
         $this->file = $file;
     }
 
-    public function match($pattern)
+    public function match($patterns)
     {
-        return preg_match($pattern, $this->line);
+        $patterns = (array) $patterns;
+        foreach ($patterns as $pattern) {
+            $pattern = $this->delimitRegex($pattern);
+            $match = preg_match($pattern, $this->line);
+
+            if ($match) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getLineNo()
@@ -25,12 +37,18 @@ class MoverLine
         return $this->file->getLines()->indexOf($this) + 1;
     }
 
-    public function replace($pattern, $replacement)
+    public function replace($patterns, $replacements)
     {
-        if ($replacement instanceof \Closure) {
-            $this->line = preg_replace_callback($pattern, $replacement, $this->line);
+        $patterns = (array) $patterns;
+        $me = $this;
+        array_walk($patterns, function (&$el) use ($me) {
+            $el = $me->delimitRegex($el);
+        });
+
+        if ($replacements instanceof \Closure) {
+            $this->line = preg_replace_callback($patterns, $replacements, $this->line);
         } else {
-            $this->line = preg_replace($pattern, $replacement, $this->line);
+            $this->line = preg_replace($patterns, $replacements, $this->line);
         }
 
         return $this;
@@ -61,5 +79,14 @@ class MoverLine
         if (!$this->file->getLines()->removeElement($this)) {
             throw new \Exception('Could not delete element');
         }
+    }
+
+    private function delimitRegex($pattern)
+    {
+        if (substr($pattern, 0, 1) == self::REGEX_DELIMITER ) {
+            return $pattern;
+        }
+
+        return self::REGEX_DELIMITER.$pattern.self::REGEX_DELIMITER;
     }
 }

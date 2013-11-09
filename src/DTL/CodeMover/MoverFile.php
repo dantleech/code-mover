@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\MoverLine;
+use DTL\CodeMover\MoverLineCollection;
 
 class MoverFile extends ArrayCollection
 {
@@ -59,17 +60,14 @@ class MoverFile extends ArrayCollection
     {
         $patterns = (array) $patterns;
 
-        $lines = array();
-        foreach ($this->getLines() as $line) {
-            foreach ($patterns as $pattern) {
-                if ($line->match($pattern)) {
-                    $lines[] = $line;
-                    break;
-                }
+        $lineCollection = new MoverLineCollection();
+        foreach($this->getLines() as $line) {
+            if ($line->match($patterns)) {
+                $lineCollection->add($line);
             }
         }
 
-        return new ArrayCollection($lines);
+        return $lineCollection;
     }
 
     public function dump()

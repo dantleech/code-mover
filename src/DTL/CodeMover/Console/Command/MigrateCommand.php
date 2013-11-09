@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Input\InputOption;
 use DTL\CodeMover\MigrationRunner;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
 class MigrateCommand extends Command
 {
@@ -31,6 +32,11 @@ class MigrateCommand extends Command
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $style = new OutputFormatterStyle('green');
+        $output->getFormatter()->setStyle('diffplus', $style);
+        $style = new OutputFormatterStyle('red');
+        $output->getFormatter()->setStyle('diffminus', $style);
+
         $this->output = $output;
         $migrationsPath = $input->getArgument('migrations_path');
         $paths = $input->getOption('path');

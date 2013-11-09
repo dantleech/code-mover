@@ -88,9 +88,11 @@ class MigrationRunner
                 foreach ($diff as $el) {
                     list($line, $stat)  = $el;
                     if ($stat != 0) {
-                        $this->log(sprintf('%s%s',
+                        $this->log(sprintf('  <diff%s>%s%s</diff%s>',
+                            $stat == 1 ? 'plus' : 'minus',
                             $stat == 1 ? '+' : '-',
-                            $line
+                            $line,
+                            $stat == 1 ? 'plus' : 'minus'
                         ));
                     }
                 }
