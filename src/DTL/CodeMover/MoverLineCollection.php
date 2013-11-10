@@ -8,7 +8,13 @@ class MoverLineCollection extends ArrayCollection
 {
     public function match($pattern)
     {
-        return preg_match($pattern, $this->line);
+        foreach ($this as $line) {
+            if (preg_match($pattern, $this->line)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function replace($pattern, $replacement)
@@ -37,5 +43,30 @@ class MoverLineCollection extends ArrayCollection
         }
         echo "Finished dumping\n";
         die(1);
+    }
+
+    public function findLine($pattern)
+    {
+        foreach ($this as $line) {
+            if ($line->match($pattern)) {
+                return $line;
+            }
+        }
+
+        return null;
+    }
+
+    public function findLines($patterns)
+    {
+        $patterns = (array) $patterns;
+
+        $lineCollection = new MoverLineCollection();
+        foreach($this as $line) {
+            if ($line->match($patterns)) {
+                $lineCollection->add($line);
+            }
+        }
+
+        return $lineCollection;
     }
 }

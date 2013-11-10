@@ -2,28 +2,17 @@
 
 namespace DTL\CodeMover;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\MoverLine;
-use DTL\CodeMover\MoverLineCollection;
 
-class MoverFile extends ArrayCollection
+class MoverFile extends MoverLineCollection
 {
-    protected $_initialized = false;
     protected $file;
-    protected $private;
-    protected $lines;
     protected $originalFile;
 
     public function __construct($file)
     {
-        $this->lines = new ArrayCollection();
         $this->file = $file;
-    }
-
-    public function getLines()
-    {
         $this->init();
-        return $this->lines;
     }
 
     public function nameMatches($pattern)
@@ -31,48 +20,12 @@ class MoverFile extends ArrayCollection
         return (boolean) preg_match($pattern, $this->file);
     }
 
-    public function init()
+    protected function init()
     {
-        if ($this->_initialized) {
-            return;
-        }
-
         $this->originalFile = file($this->file);
         foreach ($this->originalFile as $fileLine) {
-            $this->lines->add(new MoverLine($this, $fileLine));
+            $this->add(new MoverLine($this, $fileLine));
         }
-
-        $this->_initialized = true;
-    }
-
-    public function findLine($pattern)
-    {
-        foreach ($this->getLines() as $line) {
-            if ($line->match($pattern)) {
-                return $line;
-            }
-        }
-
-        return null;
-    }
-
-    public function findLines($patterns)
-    {
-        $patterns = (array) $patterns;
-
-        $lineCollection = new MoverLineCollection();
-        foreach($this->getLines() as $line) {
-            if ($line->match($patterns)) {
-                $lineCollection->add($line);
-            }
-        }
-
-        return $lineCollection;
-    }
-
-    public function dump()
-    {
-        return implode("", $this->getLines()->toArray());
     }
 
     public function getOriginalFile()
@@ -83,14 +36,14 @@ class MoverFile extends ArrayCollection
     public function commit()
     {
         $this->originalFile = array();
-        foreach ($this->lines as $line) {
+        foreach ($this as $line) {
             $this->originalFile[] = $line->getLine();
         }
     }
 
     public function isModified()
     {
-        if ($this->originalFile == $this->lines->toArray()) {
+        if ($this->originalFile == $this->toArray()) {
             return false;
         }
 

@@ -53,4 +53,14 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
         $line->replace($pattern, $replacement);
         $this->assertEquals($expected, (string) $line);
     }
+
+    public function testDelete()
+    {
+        $line = new MoverLine($this->moverFile, 'This is a line');
+        $this->moverFile->expects($this->once())
+            ->method('removeElement')
+            ->with($line)
+            ->will($this->returnValue(true));
+        $line->delete();
+    }
 }

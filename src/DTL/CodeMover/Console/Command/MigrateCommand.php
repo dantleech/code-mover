@@ -75,6 +75,10 @@ class MigrateCommand extends Command
                 case 'debug':
                     $message = sprintf('<comment>%s</comment>', $message);
                     break;
+                case null:
+                    break;
+                default:
+                    $message = sprintf('<%s>%s</%s>', $type, $message, $type);
             }
 
             $output->writeln($message);

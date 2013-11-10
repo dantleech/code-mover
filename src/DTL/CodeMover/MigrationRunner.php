@@ -82,18 +82,16 @@ class MigrationRunner
 
                 $diff = new Differ;
                 $originalString = implode("", $moverFile->getOriginalFile());
-                $newString = implode("", $moverFile->getLines()->toArray());
+                $newString = implode("", $moverFile->toArray());
                 $diff = $diff->diffToArray($originalString, $newString);
 
                 foreach ($diff as $el) {
                     list($line, $stat)  = $el;
                     if ($stat != 0) {
-                        $this->log(sprintf('  <diff%s>%s%s</diff%s>',
-                            $stat == 1 ? 'plus' : 'minus',
+                        $this->log(sprintf('%s%s',
                             $stat == 1 ? '+' : '-',
-                            $line,
-                            $stat == 1 ? 'plus' : 'minus'
-                        ));
+                            $line
+                        ), $stat == 1 ? 'diffplus' : 'diffminus');
                     }
                 }
 

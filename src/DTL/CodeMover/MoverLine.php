@@ -34,7 +34,7 @@ class MoverLine
 
     public function getLineNo()
     {
-        return $this->file->getLines()->indexOf($this) + 1;
+        return $this->file->indexOf($this) + 1;
     }
 
     public function replace($patterns, $replacements)
@@ -76,7 +76,7 @@ class MoverLine
 
     public function delete()
     {
-        if (!$this->file->getLines()->removeElement($this)) {
+        if (!$this->file->removeElement($this)) {
             throw new \Exception('Could not delete element');
         }
     }
