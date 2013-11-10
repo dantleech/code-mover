@@ -2,6 +2,9 @@
 
 namespace DTL\CodeMover;
 
+use DTL\CodeMover\PhpTokenList;
+use DTL\CodeMover\PhpToken;
+
 class MoverLine
 {
     const REGEX_DELIMITER = '/';
@@ -59,6 +62,26 @@ class MoverLine
         return $this->line;
     }
 
+    public function nextLine()
+    {
+        $index = $this->file->indexOf($this);
+        if ($this->file->offsetExists(++$index)) {
+            return $this->file->offsetGet($index);
+        }
+
+        return null;
+    }
+
+    public function prevLine()
+    {
+        $index = $this->file->indexOf($this);
+        if ($this->file->offsetExists(--$index)) {
+            return $this->file->offsetGet($index);
+        }
+
+        return null;
+    }
+
     public function getOriginalLine()
     {
         return $this->originalLine;
@@ -79,6 +102,8 @@ class MoverLine
         if (!$this->file->removeElement($this)) {
             throw new \Exception('Could not delete element');
         }
+
+        return $this;
     }
 
     private function delimitRegex($pattern)
@@ -88,5 +113,63 @@ class MoverLine
         }
 
         return self::REGEX_DELIMITER.$pattern.self::REGEX_DELIMITER;
+    }
+
+    /**
+     * Tokenize - only works for PHP at the moment.
+     *
+     * @return array
+     */
+    public function tokenize()
+    {
+        $constants = get_defined_constants(true);
+        $tokenMap = array_flip($constants['tokenizer']);
+
+        $tokenList = new PhpTokenList();
+
+        // need to add a php tag for tokenizer to work
+        $tokens = token_get_all('<?php '.$this->line);
+
+        // remove the php tag
+        array_shift($tokens);
+
+        foreach ($tokens as $token) {
+            if (is_array($token)) {
+                list($tokenType, $tokenValue) = $token;
+                if (isset($tokenMap[$tokenType])) {
+                    $tokenType = substr($tokenMap[$tokenType], 2);
+                }
+
+                $tokenList->add(new PhpToken($this, $tokenType, $tokenValue));
+                continue;
+            }
+
+            $tokenList->add($token = new PhpToken($this, 'SINGLE_CHAR', $token));
+
+            if ($token->isEndOfStatement()) {
+                break;
+            }
+        }
+
+        return $tokenList;
+    }
+
+    public function tokenizeStatement()
+    {
+        $statementTokens = new PhpTokenList;
+        $line = $this;
+
+        while ($line) {
+            foreach ($line->tokenize() as $token) {
+                $statementTokens[] = $token;
+
+                if ($token->isEndOfStatement()) {
+                    return $statementTokens;
+                }
+            }
+            $line = $line->getNext();
+        }
+
+        return $statementTokens;
     }
 }

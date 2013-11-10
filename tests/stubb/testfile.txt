@@ -9,3 +9,10 @@ $foo->setOption('asd', 'dsa');
 $foo->setOption('dsa', 'asd');
 
 exit(1);
+
+$this->thisMultiline()
+  ->is()
+  ->api();
+
+class Foobar {
+}

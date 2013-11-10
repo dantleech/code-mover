@@ -8,16 +8,20 @@
             "email": "daniel@dantleech.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/dantleech/PHP-CS-Fixer"
+        }
+    ],
     "require": {
         "doctrine/collections": "~1.1",
         "symfony/console": "~2.3",
         "symfony/finder": "~2.3",
-        "sebastian/diff": "~1.1"
+        "sebastian/diff": "~1.1",
+        "fabpot/php-cs-fixer": "dev-updated_diff_dep"
     },
     "autoload": {
         "psr-0": { "": "src" }
-    },
-    "config": {
-        "github-protocols": ["git+ssh"]
     }
 }

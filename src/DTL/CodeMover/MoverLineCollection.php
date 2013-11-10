@@ -9,8 +9,14 @@ class MoverLineCollection extends ArrayCollection
     public function match($pattern)
     {
         foreach ($this as $line) {
-            if (preg_match($pattern, $this->line)) {
-                return true;
+            $patterns = (array) $patterns;
+            foreach ($patterns as $pattern) {
+                $pattern = $this->delimitRegex($pattern);
+                $match = preg_match($pattern, $this->line);
+
+                if ($match) {
+                    return true;
+                }
             }
         }
 
@@ -47,13 +53,17 @@ class MoverLineCollection extends ArrayCollection
 
     public function findLine($pattern)
     {
+        // note we return a collection even for a singular method because
+        // we want not to crash when lines do not exist.
+        $lines = new MoverLineCollection();
         foreach ($this as $line) {
             if ($line->match($pattern)) {
-                return $line;
+                $lines->add($line);
+                break;
             }
         }
 
-        return null;
+        return $lines;
     }
 
     public function findLines($patterns)
@@ -68,5 +78,73 @@ class MoverLineCollection extends ArrayCollection
         }
 
         return $lineCollection;
+    }
+
+    public function tokenize()
+    {
+        $tokenList = new PhpTokenList();
+        foreach ($this as $line) {
+            foreach ($line->tokenize() as $token) {
+                $tokenList->add($token);
+            }
+        }
+
+        return $tokenList;
+    }
+
+    public function tokenizeStatement()
+    {
+        $this->assertSingleElement(__METHOD__);
+        foreach ($this as $line) {
+            return $line->tokenizeStatement();
+        }
+    }
+
+    public function getLineNo()
+    {
+        $this->assertSingleElement(__METHOD__);
+
+        foreach ($this as $line) {
+            return $line->getLineNo();
+        }
+
+        return $this;
+    }
+
+    protected function assertSingleElement($method)
+    {
+        if ($this->count() > 1) {
+            throw new \InvalidArgumentException(sprintf('Method "%s" requires a single element, this collection of lines contains "%s"',
+                $method, $this->count()
+            ));
+        }
+    }
+
+    public function unwrap()
+    {
+        $this->assertSingleElement(__METHOD__);
+        foreach ($this as $line) {
+            return $line;
+        }
+    }
+
+    public function nextLine()
+    {
+        $this->assertSingleElement(__METHOD__);
+        foreach ($this as $line) {
+            return $line->nextLine();
+        }
+
+        return null;
+    }
+
+    public function prevLine()
+    {
+        $this->assertSingleElement(__METHOD__);
+        foreach ($this as $line) {
+            return $line->prevLine();
+        }
+
+        return null;
     }
 }

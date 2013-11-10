@@ -50,8 +50,9 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
     public function testReplace($line, $pattern, $replacement, $expected)
     {
         $line = new MoverLine($this->moverFile, $line);
-        $line->replace($pattern, $replacement);
+        $res = $line->replace($pattern, $replacement);
         $this->assertEquals($expected, (string) $line);
+        $this->assertSame($line, $res, 'Fluid interface OK');
     }
 
     public function testDelete()
@@ -61,6 +62,18 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
             ->method('removeElement')
             ->with($line)
             ->will($this->returnValue(true));
-        $line->delete();
+        $res = $line->delete();
+        $this->assertSame($line, $res, 'Fluid interface OK');
+    }
+
+    public function testTokenize()
+    {
+        $line = new MoverLine($this->moverFile, '$this;');
+        $tokenList = $line->tokenize()->getTokensAsArray();
+        $this->assertEquals(array(
+            array('VARIABLE', '$this'),
+            array('SINGLE_CHAR', ';'),
+        ), $tokenList);
+
     }
 }

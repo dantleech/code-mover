@@ -10,6 +10,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Input\InputOption;
 use DTL\CodeMover\MigrationRunner;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Symfony\CS\Fixer;
 
 class MigrateCommand extends Command
 {
@@ -28,6 +29,7 @@ class MigrateCommand extends Command
         );
         $this->addOption('name', null, InputOption::VALUE_REQUIRED, 'File basename to match', '*');
         $this->addOption('dump', null, InputOption::VALUE_NONE, 'Dump each file (debug)');
+        $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Fix coding standards');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -42,6 +44,7 @@ class MigrateCommand extends Command
         $paths = $input->getOption('path');
         $name = $input->getOption('name');
         $dump = $input->getOption('dump');
+        $fixCs = $input->getOption('fix-cs');
 
         $mRunner = $this->initMigrationRunner($migrationsPath);
 
@@ -54,9 +57,23 @@ class MigrateCommand extends Command
 
         foreach ($finder as $file) {
             $mFile = $mRunner->migrate($file);
+
+            $fixer = new Fixer;
+            $fixer->registerBuiltInFixers();
+            $fixers = $fixer->getFixers();
+            $content = implode("", $mFile->toArray());
+
+            $output->writeln('<info>Applying CS Fixer</info>');
+            foreach ($fixers as $fixer) {
+                $output->writeln('  -- '.$fixer->getName());
+                $content = $fixer->fix($file, $content);
+                $mFile->setContent($content);
+            }
+
             if ($mFile && $dump) {
                 $output->writeln($mFile->dump());
             }
+
         }
     }
 
