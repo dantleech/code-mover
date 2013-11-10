@@ -20,11 +20,12 @@ class MigrationRunner
 
     public function addMigrator(MigratorInterface $migrator)
     {
-        if (isset($this->migrators[$migrator->getName()])) {
-            throw new \Exception(sprintf('Migrator with name "%s" already exists.'));
+        $mName = $migrator->getName();
+        if (isset($this->migrators[$mName])) {
+            throw new \RuntimeException(sprintf('Migrator with name "%s" already exists.', $mName));
         }
 
-        $this->migrators[$migrator->getName()] = $migrator;
+        $this->migrators[$mName] = $migrator;
     }
 
     public function resolveOrder($migrator, $seen = array())
@@ -81,7 +82,7 @@ class MigrationRunner
                 $migrator->migrate($moverFile);
 
                 $diff = new Differ;
-                $originalString = implode("\n", $moverFile->getOriginalFile());
+                $originalString = $moverFile->getOriginalFile()->getRaw();
                 $newString = implode("\n", $moverFile->toArray());
                 $diff = $diff->diffToArray($originalString, $newString);
 

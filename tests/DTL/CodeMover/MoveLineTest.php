@@ -66,6 +66,16 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($line, $res, 'Fluid interface OK');
     }
 
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Could not delete element
+     */
+    public function testDeleteNull()
+    {
+        $line = new MoverLine($this->moverFile, 'This is a line');
+        $res = $line->delete();
+    }
+
     public function testTokenize()
     {
         $line = new MoverLine($this->moverFile, '$this;');
@@ -74,6 +84,96 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
             array('VARIABLE', '$this'),
             array('SINGLE_CHAR', ';'),
         ), $tokenList);
+    }
 
+    public function provideNextPrevLine()
+    {
+        return array(
+            array('next'),
+            array('prev'),
+        );
+    }
+
+    /**
+     * @dataProvider provideNextPrevLine
+     */
+    public function testNextPrevLine($type)
+    {
+        $line = new MoverLine($this->moverFile, 'Line the Central');
+        $siblingLine = new MoverLine($this->moverFile, 'Line the sibling');
+        $offset = $type == 'next' ? 6 : 4;
+
+        $this->moverFile->expects($this->once())
+            ->method('getLineNeighbor')
+            ->with($line, $type == 'next' ? null : true)
+            ->will($this->returnValue(5));
+
+        if ($type == 'next') {
+            $res = $line->nextLine();
+        } else {
+            $res = $line->prevLine();
+        }
+    }
+
+    public function testNextPrevLineNull()
+    {
+        $line = new MoverLine($this->moverFile, 'Line the Central');
+        $this->assertNull($line->nextLine());
+        $this->assertNull($line->prevLine());
+    }
+
+    public function testHasChanged()
+    {
+        $line = new MoverLine($this->moverFile, 'Line the Original');
+        $line->setLine('Line the Second');
+        $res = $line->hasChanged();
+
+        $this->assertTrue($res);
+
+        $originalLine = $line->getOriginalLine();
+        $this->assertEquals('Line the Original', $originalLine);
+    }
+
+    public function testTokenizeStatement()
+    {
+        $l1 = new MoverLine($this->moverFile, '$options = array(');
+        $l2 = new MoverLine($this->moverFile, '  "foobar",');
+        $l3 = new MoverLine($this->moverFile, ');');
+
+        $this->moverFile->expects($this->exactly(2))
+            ->method('getLineNeighbor')
+            ->will($this->onConsecutiveCalls(
+                $this->returnValue($l2),
+                $this->returnValue($l3)
+            ));
+
+        $tokens = $l1->tokenizeStatement();
+        $this->assertEquals('$options = array(  "foobar",);', implode('', $tokens->getValues()));
+    }
+
+    public function testTokenizeStatementNoTerminator()
+    {
+        $l1 = new MoverLine($this->moverFile, '$options = array(');
+
+        $this->moverFile->expects($this->exactly(1))
+            ->method('getLineNeighbor')
+            ->will($this->returnValue(null));
+
+        $tokens = $l1->tokenizeStatement();
+        $this->assertEquals('$options = array(', implode('', $tokens->getValues()));
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

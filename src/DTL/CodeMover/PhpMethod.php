@@ -14,6 +14,7 @@ class PhpMethod
     {
         $this->type = $type;
         $this->name = $name;
+        $this->file = $file;
         $this->argumentString = $argumentString;
     }
 
@@ -34,18 +35,19 @@ class PhpMethod
 
     public function getLines() 
     {
-        $method = array(
+        $lines = new MoverLineCollection();
+        $lines->addLines(array(
             sprintf('%s function %s(%s)'."\n", $this->type, $this->name, $this->argumentString),
-            '{'."\n"
-        );
+            '{'
+        ));
 
         foreach ($this->lines as $line) {
-            $method[] = $line.",\n";
+            $lines->addLine($line);
         }
 
-        $method[] = '}'."\n";
+        $lines->addLine('}');
 
-        return $method;
+        return $lines;
     }
 
     public function addLine($line)

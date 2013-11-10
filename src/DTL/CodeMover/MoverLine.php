@@ -13,7 +13,7 @@ class MoverLine
     protected $originalLine;
     protected $line;
 
-    public function __construct(MoverFile $file, $line)
+    public function __construct(MoverLineCollection $file, $line)
     {
         $line = str_replace("\n", "", $line);
         $this->line = $line;
@@ -63,24 +63,19 @@ class MoverLine
         return $this->line;
     }
 
+    public function setLine($line)
+    {
+        $this->line = $line;
+    }
+
     public function nextLine()
     {
-        $index = $this->file->indexOf($this);
-        if ($this->file->offsetExists(++$index)) {
-            return $this->file->offsetGet($index);
-        }
-
-        return null;
+        return $this->file->getLineNeighbor($this);
     }
 
     public function prevLine()
     {
-        $index = $this->file->indexOf($this);
-        if ($this->file->offsetExists(--$index)) {
-            return $this->file->offsetGet($index);
-        }
-
-        return null;
+        return $this->file->getLineNeighbor($this, true);
     }
 
     public function getOriginalLine()
@@ -101,7 +96,7 @@ class MoverLine
     public function delete()
     {
         if (!$this->file->removeElement($this)) {
-            throw new \Exception('Could not delete element');
+            throw new \RuntimeException('Could not delete element');
         }
 
         return $this;
@@ -168,7 +163,7 @@ class MoverLine
                     return $statementTokens;
                 }
             }
-            $line = $line->getNext();
+            $line = $line->nextLine();
         }
 
         return $statementTokens;

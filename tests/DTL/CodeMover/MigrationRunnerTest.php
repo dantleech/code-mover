@@ -15,7 +15,8 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
             $log[] = $message;
         };
 
-        $this->runner = new MigrationRunner($logger);
+        $this->runner = new MigrationRunner();
+        $this->runner->setLogger($logger);
         $this->testFile = realpath(__DIR__.'/../../stubb/testfile.txt');
     }
 
@@ -121,7 +122,7 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
             $this->runner->addMigrator($migrator);
         }
 
-        $this->runner->migrate($this->testFile);
+        $this->runner->migrate(new \SplFileInfo($this->testFile));
         $this->assertContains('-$foo = new Thing;', $this->log);
         $this->assertContains('+$foo = new Bar;', $this->log);
         $this->assertContains('+$foo = new Bar;', $this->log);
@@ -129,5 +130,27 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('+$foo->setFoo(\'asd\', \'dsa\');', $this->log);
         $this->assertContains('-$foo->setFoo(\'asd\', \'dsa\');', $this->log);
         $this->assertContains('+$foo->setBar(\'asd\', \'dsa\');', $this->log);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage already exists
+     */
+    public function testAddDuplicateMigrator()
+    {
+        $migratorNames = array('test_1', 'test_2', 'test_1');
+
+        foreach ($migratorNames as $migratorName) {
+            $migrator = $this->getMock('DTL\CodeMover\MigratorInterface');
+            $migrator->expects($this->once())
+                ->method('getName')
+                ->will($this->returnValue($migratorName));
+            $this->runner->addMigrator($migrator);
+        }
+    }
+
+    public function testNullMigration()
+    {
+        $this->runner->migrate(new \SplFileInfo($this->testFile));
     }
 }

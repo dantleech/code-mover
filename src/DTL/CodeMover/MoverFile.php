@@ -15,9 +15,11 @@ class MoverFile extends MoverLineCollection
     public function __construct(\SplFileInfo $file)
     {
         parent::__construct();
+
         $this->file = $file;
         $this->path = $file->getRealPath();
         $this->originalPath = $this->path;;
+
         $this->init();
     }
 
@@ -40,19 +42,24 @@ class MoverFile extends MoverLineCollection
     {
         $filesystem = new Filesystem;
         $dirname = dirname($this->path);
+
         if (!file_exists($dirname)) {
             $filesystem->mkdir($dirname);
         }
 
-        file_put_contents($this->path, implode("\n", $this->toArray()));
+        return file_put_contents($this->path, implode("\n", $this->toArray()));
     }
 
     protected function init()
     {
-        $this->originalFile = file($this->file);
-        foreach ($this->originalFile as $fileLine) {
-            $this->addLine($fileLine);
-        }
+        $originalFile = new MoverLineCollection();
+
+        array_walk(file($this->file), function ($line) use ($originalFile) {
+            $originalFile->addLine($line);
+        });
+
+        $this->originalFile = $originalFile;
+        $this->addLines($originalFile->toArray());
     }
 
     public function setContent($text)
@@ -69,7 +76,7 @@ class MoverFile extends MoverLineCollection
 
     public function commit()
     {
-        $this->originalFile = array();
+        $this->originalFile = new MoverLineCollection();
         foreach ($this as $line) {
             $this->originalFile[] = $line->getLine();
         }
@@ -77,11 +84,27 @@ class MoverFile extends MoverLineCollection
 
     public function isModified()
     {
-        if ($this->originalFile == $this->toArray()) {
+        if ($this->originalFile->getRaw() == $this->getRaw()) {
             return false;
         }
 
         return true;
+    }
+
+    public function getLineNeighbor(MoverLine $line, $before = false)
+    {
+        $index = $this->indexOf($line);
+        if ($before) {
+            --$index;
+        } else {
+            ++$index;
+        }
+
+        if ($this->offsetExists($index)) {
+            return $this->offsetGet($index);
+        }
+
+        return null;
     }
 
     public function createMethod($type, $name, $argumentString = null)
@@ -94,54 +117,11 @@ class MoverFile extends MoverLineCollection
     {
         $existing = $this->findLine(sprintf('function %s', $method->getName()));
         if ($existing->count()) {
-            throw new \Exception(sprintf('Method "%s" already exists', $method->getName()));
+            throw new \RuntimeException(sprintf('Method "%s" already exists', $method->getName()));
         }
 
         $lastBracket = $this->tokenize()->filterByValue('}')->last();
         $prevLine = $lastBracket->getLine()->prevLine();
         $this->addLinesAfter($prevLine, $method->getLines());
-    }
-
-    public function addLine($line, $offset = null)
-    {
-        return $this->addLines(array($line), $offset);
-    }
-
-    public function addLines($lines, $offset = null)
-    {
-        $offset = $offset === null ? '-1' : $offset;
-
-        $newLines = array();
-
-        foreach ($this as $i => $existingLine) {
-            if ($i == $offset) {
-
-                foreach ($lines as $line) {
-                    $newLines[] = new MoverLine($this, $line);
-                }
-            }
-
-            $newLines[] = $existingLine;
-        }
-
-        if ($offset == -1) {
-            foreach ($lines as $line) {
-                $newLines[] = new MoverLine($this, $line);
-            }
-        }
-
-        $this->clear();
-
-        foreach ($newLines as $newLine) {
-            $this->add($newLine);
-        }
-
-        return $this;
-    }
-
-    public function addLinesAfter(MoverLine $targetLine, $lines)
-    {
-        $offset = $this->indexOf($targetLine);
-        $this->addLines($lines, $offset + 1);
     }
 }

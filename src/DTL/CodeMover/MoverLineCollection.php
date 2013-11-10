@@ -6,17 +6,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 class MoverLineCollection extends ArrayCollection
 {
-    public function match($pattern)
+    public function match($patterns)
     {
         foreach ($this as $line) {
-            $patterns = (array) $patterns;
-            foreach ($patterns as $pattern) {
-                $pattern = $this->delimitRegex($pattern);
-                $match = preg_match($pattern, $this->line);
-
-                if ($match) {
-                    return true;
-                }
+            if ($line->match($patterns)) {
+                return true;
             }
         }
 
@@ -41,14 +35,21 @@ class MoverLineCollection extends ArrayCollection
         return $this;
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     public function dump()
     {
         echo "Dumping ".$this->count()." lines\n";
-        foreach ($this as $line) {
-            echo $line."\n";
-        }
+        echo $this->getRaw()."\n";
         echo "Finished dumping\n";
         die(1);
+    }
+
+    public function getRaw()
+    {
+        $raw = array();
+        return implode("\n", $this->toArray());
     }
 
     public function findLine($pattern)
@@ -114,7 +115,7 @@ class MoverLineCollection extends ArrayCollection
     protected function assertSingleElement($method)
     {
         if ($this->count() > 1) {
-            throw new \InvalidArgumentException(sprintf('Method "%s" requires a single element, this collection of lines contains "%s"',
+            throw new \RuntimeException(sprintf('Method "%s" requires a single element, this collection of lines contains "%s"',
                 $method, $this->count()
             ));
         }
@@ -146,5 +147,48 @@ class MoverLineCollection extends ArrayCollection
         }
 
         return null;
+    }
+
+    public function addLine($line, $offset = null)
+    {
+        return $this->addLines(array($line), $offset);
+    }
+
+    public function addLines($lines, $offset = null)
+    {
+        $offset = $offset === null ? '-1' : $offset;
+
+        $newLines = array();
+
+        foreach ($this as $i => $existingLine) {
+            if ($i == $offset) {
+
+                foreach ($lines as $line) {
+                    $newLines[] = new MoverLine($this, $line);
+                }
+            }
+
+            $newLines[] = $existingLine;
+        }
+
+        if ($offset == -1) {
+            foreach ($lines as $line) {
+                $newLines[] = new MoverLine($this, $line);
+            }
+        }
+
+        $this->clear();
+
+        foreach ($newLines as $newLine) {
+            $this->add($newLine);
+        }
+
+        return $this;
+    }
+
+    public function addLinesAfter(MoverLine $targetLine, $lines)
+    {
+        $offset = $this->indexOf($targetLine);
+        $this->addLines($lines, $offset + 1);
     }
 }

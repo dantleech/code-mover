@@ -8,10 +8,25 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $testFile = realpath(__DIR__.'/../../stubb/testfile.txt');
-        $testPhpClassFile = realpath(__DIR__.'/../../stubb/testphpclass.php');
-        $this->file = new MoverFile($testFile);
-        $this->phpFile = new MoverFile($testPhpClassFile);
+        $testFile = realpath(__DIR__.'/../..').'/stubb/testfile.txt';
+        $testPhpClassFile = realpath(__DIR__.'/../..').'/stubb/testphpclass.php';
+        $this->file = new MoverFile(new \SplFileInfo($testFile));
+        $this->phpFile = new MoverFile(new \SplFileInfo($testPhpClassFile));
+        $this->newFile = realpath(__DIR__.'/../..').'/stubb/tmp/newfile.txt';
+        $this->removeNewFile();
+    }
+
+    public function tearDown()
+    {
+        $this->removeNewFile();
+    }
+
+    protected function removeNewFile()
+    {
+        if (file_exists($this->newFile)) {
+            unlink($this->newFile);
+            rmdir(dirname($this->newFile));
+        }
     }
 
     public function testNameMatches()
@@ -70,6 +85,7 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @depends testFindLine
+     * @todo Move to MoverLineTest
      */
     public function testNextLine()
     {
@@ -80,6 +96,7 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @depends testFindLine
+     * @todo Move to MoverLineTest
      */
     public function testPrevLine()
     {
@@ -88,11 +105,59 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('Thing', $prev->getLine());
     }
 
-    public function testMethod()
+    public function testPhpMethod()
     {
         $method = $this->phpFile->createMethod('public', 'setDefaultOptions', 'OptionsResolverInterface $resolver');
         $this->phpFile->saveMethod($method);
         $method = $this->phpFile->findLine('public function setDefaultOptions');
         $this->assertNotNull($method);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage already exists
+     */
+    public function testMethodAlreadyExists()
+    {
+        $method = $this->phpFile->createMethod('public', 'configure', null);
+        $this->phpFile->saveMethod($method);
+    }
+
+    public function testPath()
+    {
+        $path = $this->file->getPath();
+        $this->assertEquals(realpath(__DIR__.'/../../stubb').'/testfile.txt', $path);
+
+        $this->file->setPath('foobar');
+        $this->assertEquals('foobar', $this->file->getPath());
+    }
+
+    public function testWrite()
+    {
+        $this->assertFalse(file_exists($this->newFile));
+        $this->file->setPath($this->newFile);
+        $this->file->write();
+        $this->assertTrue(file_exists($this->newFile));
+    }
+
+    public function testSetContent()
+    {
+        $this->assertFalse($this->file->isModified());
+
+        $content = <<<HERE
+This
+is
+some
+content
+HERE;
+        $this->file->setContent($content);
+        $this->assertEquals(array(
+            'This',
+            'is',
+            'some',
+            'content',
+        ), $this->file->toArray());
+
+        $this->assertTrue($this->file->isModified());
     }
 }
