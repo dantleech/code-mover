@@ -3,22 +3,48 @@
 namespace DTL\CodeMover;
 
 use DTL\CodeMover\MoverLine;
+use Symfony\Component\Filesystem\Filesystem;
 
 class MoverFile extends MoverLineCollection
 {
     protected $file;
     protected $originalFile;
+    protected $originalPath;
+    protected $path;
 
-    public function __construct($file)
+    public function __construct(\SplFileInfo $file)
     {
         parent::__construct();
         $this->file = $file;
+        $this->path = $file->getRealPath();
+        $this->originalPath = $this->path;;
         $this->init();
     }
 
     public function nameMatches($pattern)
     {
         return (boolean) preg_match($pattern, $this->file);
+    }
+
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    public function setPath($path)
+    {
+        $this->path = $path;
+    }
+
+    public function write()
+    {
+        $filesystem = new Filesystem;
+        $dirname = dirname($this->path);
+        if (!file_exists($dirname)) {
+            $filesystem->mkdir($dirname);
+        }
+
+        file_put_contents($this->path, implode("\n", $this->toArray()));
     }
 
     protected function init()
@@ -73,7 +99,7 @@ class MoverFile extends MoverLineCollection
 
         $lastBracket = $this->tokenize()->filterByValue('}')->last();
         $prevLine = $lastBracket->getLine()->prevLine();
-        $this->addLinesAfter($method->getLines(), $prevLine);
+        $this->addLinesAfter($prevLine, $method->getLines());
     }
 
     public function addLine($line, $offset = null)
@@ -113,7 +139,7 @@ class MoverFile extends MoverLineCollection
         return $this;
     }
 
-    public function addLinesAfter($lines, MoverLine $targetLine)
+    public function addLinesAfter(MoverLine $targetLine, $lines)
     {
         $offset = $this->indexOf($targetLine);
         $this->addLines($lines, $offset + 1);

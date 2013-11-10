@@ -30,6 +30,7 @@ class MigrateCommand extends Command
         $this->addOption('name', null, InputOption::VALUE_REQUIRED, 'File basename to match', '*');
         $this->addOption('dump', null, InputOption::VALUE_NONE, 'Dump each file (debug)');
         $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Fix coding standards');
+        $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -45,6 +46,7 @@ class MigrateCommand extends Command
         $name = $input->getOption('name');
         $dump = $input->getOption('dump');
         $fixCs = $input->getOption('fix-cs');
+        $dryRun = $input->getOption('dry-run');
 
         $mRunner = $this->initMigrationRunner($migrationsPath);
 
@@ -61,7 +63,7 @@ class MigrateCommand extends Command
             $fixer = new Fixer;
             $fixer->registerBuiltInFixers();
             $fixers = $fixer->getFixers();
-            $content = implode("", $mFile->toArray());
+            $content = implode("\n", $mFile->toArray());
 
             $output->writeln('<info>Applying CS Fixer</info>');
             foreach ($fixers as $fixer) {
@@ -74,6 +76,9 @@ class MigrateCommand extends Command
                 $output->writeln($mFile->dump());
             }
 
+            if (false == $dryRun) {
+                $mFile->write();
+            }
         }
     }
 

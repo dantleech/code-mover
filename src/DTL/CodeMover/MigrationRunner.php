@@ -81,8 +81,8 @@ class MigrationRunner
                 $migrator->migrate($moverFile);
 
                 $diff = new Differ;
-                $originalString = implode("", $moverFile->getOriginalFile());
-                $newString = implode("", $moverFile->toArray());
+                $originalString = implode("\n", $moverFile->getOriginalFile());
+                $newString = implode("\n", $moverFile->toArray());
                 $diff = $diff->diffToArray($originalString, $newString);
 
                 foreach ($diff as $el) {

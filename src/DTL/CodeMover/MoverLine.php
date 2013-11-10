@@ -15,6 +15,7 @@ class MoverLine
 
     public function __construct(MoverFile $file, $line)
     {
+        $line = str_replace("\n", "", $line);
         $this->line = $line;
         $this->originalLine = $line;
         $this->file = $file;
