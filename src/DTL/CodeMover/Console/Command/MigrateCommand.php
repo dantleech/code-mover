@@ -60,7 +60,6 @@ class MigrateCommand extends Command
 
         foreach ($finder as $file) {
             $mFile = $mRunner->migrate($file);
-
             $content = implode("\n", $mFile->toArray());
 
 
@@ -71,10 +70,14 @@ class MigrateCommand extends Command
                 $fixers = $fixer->getFixers();
 
                 foreach ($fixers as $fixer) {
-                    $output->writeln('  -- '.$fixer->getName());
-                    $content = $fixer->fix($file, $content);
-                    $mFile->setContent($content);
+                    if ($fixer->supports($file)) {
+                        $output->writeln('  -- '.$fixer->getName());
+                        $content = $fixer->fix($file, $content);
+                    }
                 }
+
+                $mFile->setContent($content);
+                $mFile->commit();
             }
 
             if ($mFile && $dump) {
