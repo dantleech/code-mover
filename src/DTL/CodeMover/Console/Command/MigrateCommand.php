@@ -61,16 +61,20 @@ class MigrateCommand extends Command
         foreach ($finder as $file) {
             $mFile = $mRunner->migrate($file);
 
-            $fixer = new Fixer;
-            $fixer->registerBuiltInFixers();
-            $fixers = $fixer->getFixers();
             $content = implode("\n", $mFile->toArray());
 
-            $output->writeln('<info>Applying CS Fixer</info>');
-            foreach ($fixers as $fixer) {
-                $output->writeln('  -- '.$fixer->getName());
-                $content = $fixer->fix($file, $content);
-                $mFile->setContent($content);
+
+            if ($fixCs) {
+                $output->writeln('<info>Applying CS Fixer</info>');
+                $fixer = new Fixer;
+                $fixer->registerBuiltInFixers();
+                $fixers = $fixer->getFixers();
+
+                foreach ($fixers as $fixer) {
+                    $output->writeln('  -- '.$fixer->getName());
+                    $content = $fixer->fix($file, $content);
+                    $mFile->setContent($content);
+                }
             }
 
             if ($mFile && $dump) {

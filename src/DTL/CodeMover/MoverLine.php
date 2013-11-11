@@ -5,7 +5,7 @@ namespace DTL\CodeMover;
 use DTL\CodeMover\PhpTokenList;
 use DTL\CodeMover\PhpToken;
 
-class MoverLine
+class MoverLine implements MoverLineInterface
 {
     const REGEX_DELIMITER = '/';
 
@@ -19,6 +19,11 @@ class MoverLine
         $this->line = $line;
         $this->originalLine = $line;
         $this->file = $file;
+    }
+
+    public function getSingle()
+    {
+        return $this;
     }
 
     public function match($patterns)
@@ -183,27 +188,13 @@ class MoverLine
 
         while ($line) {
             foreach ($line->tokenize() as $token) {
-                if ($token->getValue() == $leftString) {
-                    $leftStringCount++;
-                }
-
-                if ($token->getValue() == $rightString) {
-                    $rightStringCount++;
-                }
-
-                if ($leftStringCount) {
-                    $tokenList->add($token);
-                }
-
-                if ($leftStringCount && $leftStringCount == $rightStringCount) {
-                    return $tokenList;
-                }
+                $tokenList->add($token);
             }
 
             $line = $line->nextLine();
         }
 
-        return $tokenList;
+        return $tokenList->findBetween($leftString, $rightString);
     }
 
 }

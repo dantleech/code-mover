@@ -4,7 +4,7 @@ namespace DTL\CodeMover;
 
 use Doctrine\Common\Collections\ArrayCollection;
 
-class MoverLineCollection extends ArrayCollection
+class MoverLineCollection extends ArrayCollection implements MoverLineInterface
 {
     public function match($patterns)
     {
@@ -106,10 +106,11 @@ class MoverLineCollection extends ArrayCollection
      */
     public function tokenizeBetween($leftString, $rightString)
     {
-        $line = $this->first();
+        $tokenList = new PhpTokenList();
         foreach ($this as $line) {
             return $line->tokenizeBetween($leftString, $rightString);
         }
+        return $tokenList;
     }
 
     public function getLineNo()
@@ -197,10 +198,16 @@ class MoverLineCollection extends ArrayCollection
         return $this;
     }
 
-    public function addLinesAfter(MoverLine $targetLine, $lines)
+    public function addLinesAfter(MoverLineInterface $targetLine, $lines)
+    {
+        $offset = $this->indexOf($targetLine->getSingle());
+        $this->addLines($lines, $offset + 1);
+    }
+
+    public function addLineAfter(MoverLineInterface $targetLine, $line)
     {
         $offset = $this->indexOf($targetLine);
-        $this->addLines($lines, $offset + 1);
+        $this->addLinesAfter($targetLine, (array) $line, $offset + 1);
     }
 
     public function getLineNeighbor(MoverLine $line, $before = false)
@@ -217,5 +224,11 @@ class MoverLineCollection extends ArrayCollection
         }
 
         return null;
+    }
+
+    public function getSingle()
+    {
+        $this->assertSingleElement(__METHOD__);
+        return $this->first();
     }
 }
