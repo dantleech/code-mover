@@ -168,4 +168,42 @@ class MoverLine
 
         return $statementTokens;
     }
+
+    /**
+     * Tokenize until the number of $leftString equals the number of $rightString
+     */
+    public function tokenizeBetween($leftString, $rightString)
+    {
+        $leftStringCount = 0;
+        $rightStringCount = 0;
+
+        $tokenList = new PhpTokenList();
+
+        $line = $this;
+
+        while ($line) {
+            foreach ($line->tokenize() as $token) {
+                if ($token->getValue() == $leftString) {
+                    $leftStringCount++;
+                }
+
+                if ($token->getValue() == $rightString) {
+                    $rightStringCount++;
+                }
+
+                if ($leftStringCount) {
+                    $tokenList->add($token);
+                }
+
+                if ($leftStringCount && $leftStringCount == $rightStringCount) {
+                    return $tokenList;
+                }
+            }
+
+            $line = $line->nextLine();
+        }
+
+        return $tokenList;
+    }
+
 }

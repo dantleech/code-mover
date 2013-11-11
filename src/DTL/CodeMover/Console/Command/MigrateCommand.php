@@ -29,7 +29,7 @@ class MigrateCommand extends Command
         );
         $this->addOption('name', null, InputOption::VALUE_REQUIRED, 'File basename to match', '*');
         $this->addOption('dump', null, InputOption::VALUE_NONE, 'Dump each file (debug)');
-        $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Fix coding standards');
+        $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Applies the fabpot CSS fixer');
         $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run');
     }
 
@@ -52,6 +52,7 @@ class MigrateCommand extends Command
 
         $finder = new Finder;
         $finder->name($name);
+        $finder->files();
 
         foreach ($paths as $path) {
             $finder->in($path);

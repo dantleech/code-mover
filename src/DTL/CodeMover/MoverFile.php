@@ -47,7 +47,7 @@ class MoverFile extends MoverLineCollection
             $filesystem->mkdir($dirname);
         }
 
-        return file_put_contents($this->path, implode("\n", $this->toArray()));
+        return file_put_contents($this->path, implode("\n", $this->originalFile->toArray()));
     }
 
     protected function init()
@@ -89,22 +89,6 @@ class MoverFile extends MoverLineCollection
         }
 
         return true;
-    }
-
-    public function getLineNeighbor(MoverLine $line, $before = false)
-    {
-        $index = $this->indexOf($line);
-        if ($before) {
-            --$index;
-        } else {
-            ++$index;
-        }
-
-        if ($this->offsetExists($index)) {
-            return $this->offsetGet($index);
-        }
-
-        return null;
     }
 
     public function createMethod($type, $name, $argumentString = null)

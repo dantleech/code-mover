@@ -56,6 +56,10 @@ class MigrationRunner
 
     public function getOrderedMigrators()
     {
+        if ($this->orderedMigrators) {
+            return $this->orderedMigrators;
+        }
+
         foreach ($this->migrators as $migrator) {
             if (!in_array($migrator, $this->orderedMigrators, true)) {
                 $this->resolveOrder($migrator);
@@ -103,10 +107,6 @@ class MigrationRunner
             }
         }
 
-        if ($modified) {
-            return $moverFile;
-        }
-
-        return null;
+        return $moverFile;
     }
 }

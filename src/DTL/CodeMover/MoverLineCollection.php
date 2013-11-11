@@ -101,6 +101,17 @@ class MoverLineCollection extends ArrayCollection
         }
     }
 
+    /**
+     * Tokenize until the number of $leftString equals the number of $rightString
+     */
+    public function tokenizeBetween($leftString, $rightString)
+    {
+        $line = $this->first();
+        foreach ($this as $line) {
+            return $line->tokenizeBetween($leftString, $rightString);
+        }
+    }
+
     public function getLineNo()
     {
         $this->assertSingleElement(__METHOD__);
@@ -190,5 +201,21 @@ class MoverLineCollection extends ArrayCollection
     {
         $offset = $this->indexOf($targetLine);
         $this->addLines($lines, $offset + 1);
+    }
+
+    public function getLineNeighbor(MoverLine $line, $before = false)
+    {
+        $index = $this->indexOf($line);
+        if ($before) {
+            --$index;
+        } else {
+            ++$index;
+        }
+
+        if ($this->offsetExists($index)) {
+            return $this->offsetGet($index);
+        }
+
+        return null;
     }
 }

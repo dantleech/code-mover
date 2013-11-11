@@ -93,6 +93,43 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
         $res = $lc->tokenizeStatement();
     }
 
+    public function provideTokenizeBetween()
+    {
+        return array(
+            array(
+                array(
+                    'public function foobar()',
+                    '{',
+                    '  echo "Foobar";',
+                    '}',
+                    'you cant see me'
+                ),
+                '{', '}', 7
+            ),
+            array(
+                array(
+                    '$dir = (realpath(__DIR__."/Foobar/barFoo").basename("somefile.php")); // rubbish',
+                    'you cant see me'
+                ),
+                '(', ')', 13
+            )
+        );
+
+    }
+
+    /**
+     * @dataProvider provideTokenizeBetween
+     */
+    public function testTokenizeBetween($lines, $left, $right, $expectedNb)
+    {
+        $lc = new MoverLineCollection();
+        $lc->addLines($lines);
+
+        $res = $lc->tokenizeBetween($left, $right);
+        $this->assertCount($expectedNb, $res);
+        $this->assertEquals($right, $res->last()->getValue());
+    }
+
     public function testMatch()
     {
         $this->line1->expects($this->once())
