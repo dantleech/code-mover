@@ -135,6 +135,32 @@ class PhpTokenList extends ArrayCollection
         return $lines;
     }
 
+    public function findMatchingEnd($left, $right)
+    {
+        $leftCount = 0;
+        $rightCount = 0;
+
+        while ($this->offsetExists($this->position)) {
+            $token = $this->offsetGet($this->position);
+
+            if ($token->getValue() == $left) {
+                $leftCount++;
+            }
+
+            if ($token->getValue() == $right) {
+                $rightCount++;
+            }
+
+            if ($leftCount && $leftCount == $rightCount) {
+                return $token;
+            }
+
+            $this->position++;
+        }
+
+        return null;
+    }
+
     public function findBetween($left, $right)
     {
         $leftCount = 0;

@@ -26,6 +26,24 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
         return $this;
     }
 
+    public function removeElement($element)
+    {
+        $newLines = array();
+        foreach ($this as $line) {
+            if ($line !== $element) {
+                $newLines[] = $line;
+            }
+        }
+
+        $this->clear();
+
+        foreach ($newLines as $newLine) {
+            $this->add($newLine);
+        }
+
+        return true;
+    }
+
     public function delete()
     {
         foreach ($this as $line) {
@@ -208,10 +226,22 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
         $this->addLines($lines, $offset + 1);
     }
 
+    public function addLinesBefore(MoverLineInterface $targetLine, $lines)
+    {
+        $offset = $this->indexOf($targetLine->getSingle());
+        $this->addLines($lines, $offset);
+    }
+
     public function addLineAfter(MoverLineInterface $targetLine, $line)
     {
-        $offset = $this->indexOf($targetLine);
+        $offset = $this->indexOf($targetLine->getSingle());
         $this->addLinesAfter($targetLine, array($line), $offset + 1);
+    }
+
+    public function addLineBefore(MoverLineInterface $targetLine, $line)
+    {
+        $offset = $this->indexOf($targetLine->getSingle());
+        $this->addLinesBefore($targetLine, array($line));
     }
 
     public function getLineNeighbor(MoverLine $line, $before = false)
