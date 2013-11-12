@@ -32,4 +32,64 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
             'arf', 'garf'
         ), $values);
     }
+
+    public function testSeekType()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $token = $tokenList->seekType('BARFOO')->token();
+        $this->assertEquals('barf', $token->getValue());
+    }
+
+    public function testSeekValue()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $token = $tokenList->seekValue('barf')->token();
+        $this->assertEquals('BARFOO', $token->getType());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Could not find token
+     */
+    public function testSeekValueNotFound()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $tokenList->seekValue('NOTKNOWN');
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Could not find token
+     */
+    public function testSeekTypeNotFound()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $tokenList->seekType('NOTKNOWN');
+    }
+
+    public function testLines()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $lines = $tokenList->lines();
+        $this->assertNotNull($lines);
+        $this->assertCount(1, $lines);
+        $this->assertSame($this->line, $lines->first());
+    }
+
+    public function testToken()
+    {
+        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
+        $token = $tokenList->token();
+        $this->assertSame($token, $this->t1);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage No token found at offset
+     */
+    public function testTokenNotFound()
+    {
+        $tokenList = new PhpTokenList();
+        $token = $tokenList->token();
+    }
 }

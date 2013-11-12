@@ -179,22 +179,31 @@ class MoverLine implements MoverLineInterface
      */
     public function tokenizeBetween($leftString, $rightString)
     {
-        $leftStringCount = 0;
-        $rightStringCount = 0;
-
         $tokenList = new PhpTokenList();
-
         $line = $this;
+        $started = false;
 
         while ($line) {
             foreach ($line->tokenize() as $token) {
                 $tokenList->add($token);
+                if ($token->getValue() == $leftString) {
+                    $started = true;
+                }
+            }
+
+            if (null !== $betweenList = $tokenList->rewind()->findBetween($leftString, $rightString)) {
+                return $betweenList;
             }
 
             $line = $line->nextLine();
         }
 
-        return $tokenList->findBetween($leftString, $rightString);
-    }
+        if ($started) {
+            throw new \RuntimeException(sprintf(
+                'Could not find end string "%s" for tokenizeBetween method', $rightString
+            ));
+        }
 
+        return new PhpTokenList();
+    }
 }

@@ -8,6 +8,55 @@ class PhpTokenList extends ArrayCollection
 {
     protected $position = 0;
 
+    public function token()
+    {
+        if ($this->offsetExists($this->position)) {
+            return $this->offsetGet($this->position);
+        }
+
+        throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
+    }
+
+    public function seekValue($value)
+    {
+        while ($this->offsetExists($this->position)) {
+            $token = $this->offsetGet($this->position);
+
+            if ($value == $token->getValue()) {
+                return $this;
+            }
+
+            $this->position++;
+        }
+
+        throw new \RuntimeException(sprintf(
+            'Could not find token with value "%s", I have: "%s"',
+            print_r($value, true),
+            $value,
+            implode(",", $this->dump())
+        ));
+    }
+
+    public function seekType($type)
+    {
+        while ($this->offsetExists($this->position)) {
+            $token = $this->offsetGet($this->position);
+
+            if ($type == $token->getType()) {
+                return $this;
+            }
+
+            $this->position++;
+        }
+
+        throw new \RuntimeException(sprintf(
+            'Could not find token with type "%s", I have: "%s"',
+            print_r($type, true),
+            $type ? : '**any**',
+            implode(",", $this->dump())
+        ));
+    }
+
     public function dump()
     {
         $out = array();
@@ -18,69 +67,7 @@ class PhpTokenList extends ArrayCollection
         return $out;
     }
 
-    public function nextToken($type = null)
-    {
-        $i = $this->position + 1;
-
-        while ($this->offsetExists($i)) {
-            $token = $this->offsetGet($i);
-
-            if (null === $type) {
-                return $token;
-            }
-
-            if ($token->getType() == $type) {
-                return $token;
-            }
-
-            $i++;
-        }
-    }
-
-    public function currentToken()
-    {
-        if ($this->offsetExists($this->position)) {
-            return $this->offsetGet($this->position);
-        }
-    }
-
-    public function seekToken($tokenValue, $type = null)
-    {
-        while ($this->offsetExists($this->position)) {
-            $token = $this->offsetGet($this->position);
-
-            if ($tokenValue instanceof \PhpToken) {
-                if ($tokenValue === $token) {
-                    return $this;
-                }
-            } elseif (null === $type && $tokenValue == $token->getValue()) {
-                return $this;
-            } elseif ($type == $token->getType() && $tokenValue == $token->getValue()) {
-                return $this;
-            }
-
-            $this->position++;
-        }
-
-        return null;
-    }
-
-    public function seekTokenOrDie($tokenValue, $type = null)
-    {
-        $res = $this->seekToken($tokenValue, $type);
-        if (null === $res) {
-            throw new \RuntimeException(sprintf(
-                'Could not find token with value "%s" and type "%s", I have: "%s"',
-                print_r($tokenValue, true),
-                $type ? : '**any**',
-                implode(",", $this->dump())
-            ));
-        }
-
-        return $res;
-    }
-
-    public function getTokensAsArray()
+    public function tokensAsArray()
     {
         $tokens = array();
         foreach ($this as $token) {
@@ -115,10 +102,17 @@ class PhpTokenList extends ArrayCollection
     public function valuesByType($type)
     {
         $list = $this->filterByType($type);
-        return $list->getValues();
+        return $list->values();
     }
 
-    public function getValues()
+    public function rewind()
+    {
+        $this->position = 0;
+
+        return $this;
+    }
+
+    public function values()
     {
         $values = array();
 
@@ -169,5 +163,7 @@ class PhpTokenList extends ArrayCollection
 
             $this->position++;
         }
+
+        return null;
     }
 }

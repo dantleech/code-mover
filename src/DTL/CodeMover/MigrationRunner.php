@@ -56,7 +56,7 @@ class MigrationRunner
 
     public function getOrderedMigrators()
     {
-        if ($this->orderedMigrators) {
+        if (array() != $this->orderedMigrators) {
             return $this->orderedMigrators;
         }
 

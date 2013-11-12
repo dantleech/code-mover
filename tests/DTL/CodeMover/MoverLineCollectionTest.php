@@ -10,6 +10,8 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
             ->disableOriginalConstructor()->getMock();
         $this->line2 = $this->getMockBuilder('DTL\CodeMover\MoverLine')
             ->disableOriginalConstructor()->getMock();
+        $this->line3 = $this->getMockBuilder('DTL\CodeMover\MoverLine')
+            ->disableOriginalConstructor()->getMock();
 
         $this->lineCollection = new MoverLineCollection(array(
             $this->line1,
@@ -112,7 +114,30 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
                     'you cant see me'
                 ),
                 '(', ')', 13
-            )
+            ),
+            array(
+                array(
+                    'function () {',
+                    '// ..',
+                ), '{', '}', 'exception',
+            ),
+            array(
+                array(
+                    'function () {',
+                    '// ..',
+                    '}',
+                ), '%', '%', 0,
+            ),
+            array(
+                array(
+                    '% asd asd %',
+                    '// ..',
+                    '}',
+                ), '%', '%', 1,
+            ),
+            array(
+                array(), 'a', 'b', 0
+            ),
         );
 
     }
@@ -125,9 +150,18 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
         $lc = new MoverLineCollection();
         $lc->addLines($lines);
 
+        if ($expectedNb === 'exception') {
+            $this->setExpectedException('RuntimeException', 'Could not find end string');
+        }
+
         $res = $lc->tokenizeBetween($left, $right);
+
+        $this->assertNotNull($res);
         $this->assertCount($expectedNb, $res);
-        $this->assertEquals($right, $res->last()->getValue());
+
+        if ($expectedNb > 0) {
+            $this->assertEquals($right, $res->last()->getValue());
+        }
     }
 
     public function testMatch()
@@ -171,9 +205,45 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
         $res = $lc->prevLine();
         $this->assertNull($res);
     }
+
+    public function testAddLineAfter()
+    {
+        $this->lineCollection->addLineAfter($this->line1, $this->line3);
+        $res = $this->lineCollection->toArray();
+        $this->assertSame(array(
+            $this->line1, $this->line3, $this->line2
+        ), $res);
+    }
+
+    public function testAddLinesAfter()
+    {
+        $this->lineCollection->addLinesAfter($this->line1, array(
+            'this is line 1',
+            'this is line 2',
+        ));
+        $res = $this->lineCollection->toArray();
+
+        $this->assertCount(4, $this->lineCollection);
+        $this->assertEquals('this is line 1', $this->lineCollection->offsetGet(1));
+        $this->assertEquals('this is line 2', $this->lineCollection->offsetGet(2));
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testGetSingleMoreThanOne()
+    {
+        $this->lineCollection->getSingle();
+    }
+
+    public function testGetSingle()
+    {
+        $lc = new MoverLineCollection();
+        $lc->add($this->line1);
+        $res = $lc->getSingle();
+        $this->assertSame($this->line1, $res);
+    }
 }
-
-
 
 
 

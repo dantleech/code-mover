@@ -79,7 +79,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
     public function testTokenize()
     {
         $line = new MoverLine($this->moverFile, '$this;');
-        $tokenList = $line->tokenize()->getTokensAsArray();
+        $tokenList = $line->tokenize()->tokensAsArray();
         $this->assertEquals(array(
             array('VARIABLE', '$this'),
             array('SINGLE_CHAR', ';'),
@@ -147,8 +147,8 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
                 $this->returnValue($l3)
             ));
 
-        $tokens = $l1->tokenizeStatement();
-        $this->assertEquals('$options = array(  "foobar",);', implode('', $tokens->getValues()));
+        $tokenList = $l1->tokenizeStatement();
+        $this->assertEquals('$options = array(  "foobar",);', implode('', $tokenList->values()));
     }
 
     public function testTokenizeStatementNoTerminator()
@@ -160,7 +160,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue(null));
 
         $tokens = $l1->tokenizeStatement();
-        $this->assertEquals('$options = array(', implode('', $tokens->getValues()));
+        $this->assertEquals('$options = array(', implode('', $tokens->values()));
     }
 }
 

@@ -106,11 +106,11 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
      */
     public function tokenizeBetween($leftString, $rightString)
     {
-        $tokenList = new PhpTokenList();
         foreach ($this as $line) {
             return $line->tokenizeBetween($leftString, $rightString);
         }
-        return $tokenList;
+
+        return new PhpTokenList();
     }
 
     public function getLineNo()
@@ -176,7 +176,11 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
             if ($i == $offset) {
 
                 foreach ($lines as $line) {
-                    $newLines[] = new MoverLine($this, $line);
+                    if ($line instanceof MoverLine) {
+                        $newLines[] = $line;
+                    } else {
+                        $newLines[] = new MoverLine($this, $line);
+                    }
                 }
             }
 
@@ -207,7 +211,7 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
     public function addLineAfter(MoverLineInterface $targetLine, $line)
     {
         $offset = $this->indexOf($targetLine);
-        $this->addLinesAfter($targetLine, (array) $line, $offset + 1);
+        $this->addLinesAfter($targetLine, array($line), $offset + 1);
     }
 
     public function getLineNeighbor(MoverLine $line, $before = false)

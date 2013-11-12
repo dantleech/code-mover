@@ -54,6 +54,10 @@ class MigrateCommand extends Command
         $finder->name($name);
         $finder->files();
 
+        if (!$paths) {
+            $paths = array(__DIR__);
+        }
+
         foreach ($paths as $path) {
             $finder->in($path);
         }
