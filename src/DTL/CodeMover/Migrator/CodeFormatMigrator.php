@@ -26,7 +26,7 @@ class CodeFormatMigrator extends AbstractMigrator
     {
         $this->fixNamespaceAndUse($file);
         $this->fixExtraSpaces($file);
-        $this->fixIndentation($file);
+        // $this->fixIndentation($file);
     }
 
     protected function fixNamespaceAndUse(MoverFile $file)
@@ -72,11 +72,13 @@ class CodeFormatMigrator extends AbstractMigrator
 
         foreach ($file->findLines('function') as $line) {
             $endToken = $line->tokenizeBetween('{', '}')->last();
-            if (
-                !$endToken->getLine()->nextLine()->match('^ *$')
-                && !$endToken->getLine()->nextLine()->match('^ *} *$')
-            ) {
-                $file->addLineAfter($endToken->getLine(), '');
+            if ($endToken->getLine()->nextLine()) {
+                if (
+                    !$endToken->getLine()->nextLine()->match('^ *$')
+                    && !$endToken->getLine()->nextLine()->match('^ *} *$')
+                ) {
+                    $file->addLineAfter($endToken->getLine(), '');
+                }
             }
         }
     }
@@ -88,12 +90,22 @@ class CodeFormatMigrator extends AbstractMigrator
             $line->replace(' *(.*)$', str_repeat('    ', $i).'\1');
 
             $tokens = $line->tokenize();
-            if (in_array('{', $tokens->values())) {
-                $i += 1;;
+            $tokens = $tokens->filterByType('SINGLE_CHAR');
+
+            if (!$tokens->count()) {
+                continue;
             }
-            if (in_array('}', $tokens->values())) {
+
+            if (in_array($tokens->first()->getValue(), array('}', ')'))) {
                 $i -= 1;;
+                if (preg_match('&else&', $line->getLine())) {
+                }
+
                 $line->replace(' *(.*)$', str_repeat('    ', $i).'\1');
+            }
+
+            if (in_array($tokens->last()->getValue(), array('(', '{'))) {
+                $i += 1;;
             }
         }
     }

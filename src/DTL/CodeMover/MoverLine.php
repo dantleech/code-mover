@@ -31,10 +31,10 @@ class MoverLine implements MoverLineInterface
         $patterns = (array) $patterns;
         foreach ($patterns as $pattern) {
             $pattern = $this->delimitRegex($pattern);
-            $match = preg_match($pattern, $this->line);
+            $match = preg_match($pattern, $this->line, $matches);
 
             if ($match) {
-                return true;
+                return $matches;
             }
         }
 

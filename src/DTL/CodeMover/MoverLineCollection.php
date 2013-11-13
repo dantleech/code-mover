@@ -9,8 +9,8 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
     public function match($patterns)
     {
         foreach ($this as $line) {
-            if ($line->match($patterns)) {
-                return true;
+            if ($matches = $line->match($patterns)) {
+                return $matches;
             }
         }
 

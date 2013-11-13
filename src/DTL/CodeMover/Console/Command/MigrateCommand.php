@@ -31,6 +31,8 @@ class MigrateCommand extends Command
         $this->addOption('dump', null, InputOption::VALUE_NONE, 'Dump each file (debug)');
         $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Applies the fabpot CSS fixer');
         $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run');
+        $this->addOption('migrator', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Migrator', array());
+        $this->addOption('ignore-missing-deps', null, InputOption::VALUE_NONE, 'Ignore missing dependencies');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -47,8 +49,10 @@ class MigrateCommand extends Command
         $dump = $input->getOption('dump');
         $fixCs = $input->getOption('fix-cs');
         $dryRun = $input->getOption('dry-run');
+        $migratorNames = $input->getOption('migrator');
+        $ignoreMissingDeps = $input->getOption('ignore-missing-deps');
 
-        $mRunner = $this->initMigrationRunner($migrationsPath);
+        $mRunner = $this->initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps);
 
         $finder = new Finder;
         $finder->name($name);
@@ -94,7 +98,7 @@ class MigrateCommand extends Command
         }
     }
 
-    protected function initMigrationRunner($migrationsPath)
+    protected function initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps)
     {
         $finder = new Finder;
         $finder->name('*Migrator.php');
@@ -117,7 +121,12 @@ class MigrateCommand extends Command
 
             $output->writeln($message);
         };
-        $mRunner = new MigrationRunner($logger);
+        $options = array();
+        if ($ignoreMissingDeps) {
+            $options['ignore_missing_dependencies'] = true;
+        }
+
+        $mRunner = new MigrationRunner($logger, $options);
 
         $migratorFiles = array();
         foreach ($finder as $file) {
@@ -134,8 +143,11 @@ class MigrateCommand extends Command
             $refl = new \ReflectionClass($migratorClass);
             if ($refl->isInstantiable()) {
                 $migrator = new $migratorClass;
-                $mRunner->addMigrator($migrator);
-                $this->output->writeln('<info>Adding migrator: </info>'.$migratorClass);
+
+                if (!$migratorNames || $migratorNames && in_array($migrator->getName(), $migratorNames)) {
+                    $mRunner->addMigrator($migrator);
+                    $this->output->writeln('<info>Adding migrator: </info>'.$migratorClass);
+                }
             }
         }
 

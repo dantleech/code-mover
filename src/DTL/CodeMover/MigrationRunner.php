@@ -12,10 +12,16 @@ class MigrationRunner
     protected $migrators = array();
     protected $order = array();
     protected $orderedMigrators = array();
+    protected $ignoreMissingDependencies = false;
 
-    public function __construct(\Closure $logger = null)
+    public function __construct(\Closure $logger = null, $options = array())
     {
+        $options = array_merge(array(
+            'ignore_missing_dependencies' => false,
+        ), $options);
+
         $this->logger = $logger;
+        $this->ignoreMissingDependencies = $options['ignore_missing_dependencies'];
     }
 
     public function addMigrator(MigratorInterface $migrator)
@@ -45,9 +51,22 @@ class MigrationRunner
                 ));
             }
 
-            if (!in_array($this->migrators[$depName], $this->orderedMigrators, true)) {
+            if (isset($this->migrators[$depName])) {
+                $depMigrator = $this->migrators[$depName];
+            } else {
+                if (false == $this->ignoreMissingDependencies) {
+                    throw new \Exception(sprintf(
+                        'Missing dependency "%s" for migration class "%s"',
+                        $depName, get_class($migrator)
+                    ));
+                }
+
+                continue;
+            }
+
+            if (!in_array($depMigrator, $this->orderedMigrators, true)) {
                 $seen[] = $migrator->getName();
-                $this->resolveOrder($this->migrators[$depName], $seen);
+                $this->resolveOrder($depMigrator, $seen);
             }
         }
 
