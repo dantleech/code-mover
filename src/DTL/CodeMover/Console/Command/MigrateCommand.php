@@ -66,10 +66,10 @@ class MigrateCommand extends Command
             $finder->in($path);
         }
 
+
         foreach ($finder as $file) {
             $mFile = $mRunner->migrate($file);
             $content = implode("\n", $mFile->toArray());
-
 
             if ($fixCs) {
                 $output->writeln('<info>Applying CS Fixer</info>');
@@ -94,6 +94,13 @@ class MigrateCommand extends Command
 
             if (false == $dryRun) {
                 $mFile->write();
+            }
+        }
+
+        $context = $mRunner->getContext();
+        if ($todos = $context->getTodos()) {
+            foreach ($todos as $todo) {
+                $output->writeln('todo: '.$todo);
             }
         }
     }

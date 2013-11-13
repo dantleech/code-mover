@@ -6,6 +6,8 @@ trait LoggableTrait
 {
     protected $logger;
 
+    protected $todos = array();
+
     public function log($message, $type = null)
     {
         if ($logger = $this->logger) {

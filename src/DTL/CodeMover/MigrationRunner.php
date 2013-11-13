@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use SebastianBergmann\Diff\Diff;
 use SebastianBergmann\Diff\Differ;
+use DTL\CodeMover\MoverContext;
 
 class MigrationRunner
 {
@@ -13,6 +14,7 @@ class MigrationRunner
     protected $order = array();
     protected $orderedMigrators = array();
     protected $ignoreMissingDependencies = false;
+    protected $context;
 
     public function __construct(\Closure $logger = null, $options = array())
     {
@@ -22,6 +24,7 @@ class MigrationRunner
 
         $this->logger = $logger;
         $this->ignoreMissingDependencies = $options['ignore_missing_dependencies'];
+        $this->context = new MoverContext;
     }
 
     public function addMigrator(MigratorInterface $migrator)
@@ -31,6 +34,7 @@ class MigrationRunner
             throw new \RuntimeException(sprintf('Migrator with name "%s" already exists.', $mName));
         }
 
+        $migrator->setContext($this->context);
         $this->migrators[$mName] = $migrator;
     }
 
@@ -127,5 +131,10 @@ class MigrationRunner
         }
 
         return $moverFile;
+    }
+
+    public function getContext()
+    {
+        return $this->context;
     }
 }
