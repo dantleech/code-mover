@@ -4,6 +4,7 @@ namespace DTL\CodeMover\Migrator;
 
 use DTL\CodeMover\MoverFile;
 use DTL\CodeMover\AbstractMigrator;
+use DTL\CodeMover\MigratorContext;
 
 class CodeFormatMigrator extends AbstractMigrator
 {
@@ -22,8 +23,9 @@ class CodeFormatMigrator extends AbstractMigrator
         return $file->nameMatches('/.*\.php/');
     }
 
-    public function migrate(MoverFile $file)
+    public function migrate(MigratorContext $context)
     {
+        $file = $context->getFile();
         $this->fixNamespaceAndUse($file);
         $this->fixExtraSpaces($file);
         // $this->fixIndentation($file);

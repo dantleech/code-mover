@@ -3,6 +3,7 @@
 namespace DTL\CodeMover;
 
 use DTL\CodeMover\MoverFile;
+use DTL\CodeMover\MigratorContext;
 
 interface MigratorInterface
 {
@@ -12,5 +13,5 @@ interface MigratorInterface
 
     public function accepts(MoverFile $file);
 
-    public function migrate(MoverFile $file);
+    public function migrate(MigratorContext $context);
 }

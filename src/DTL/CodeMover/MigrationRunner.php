@@ -4,7 +4,7 @@ namespace DTL\CodeMover;
 
 use SebastianBergmann\Diff\Diff;
 use SebastianBergmann\Diff\Differ;
-use DTL\CodeMover\MoverContext;
+use DTL\CodeMover\RunnerContext;
 
 class MigrationRunner
 {
@@ -15,6 +15,7 @@ class MigrationRunner
     protected $orderedMigrators = array();
     protected $ignoreMissingDependencies = false;
     protected $context;
+    protected $migratorContexts = array();
 
     public function __construct(\Closure $logger = null, $options = array())
     {
@@ -24,18 +25,12 @@ class MigrationRunner
 
         $this->logger = $logger;
         $this->ignoreMissingDependencies = $options['ignore_missing_dependencies'];
-        $this->context = new MoverContext;
+        $this->context = new RunnerContext;
     }
 
     public function addMigrator(MigratorInterface $migrator)
     {
-        $mName = $migrator->getName();
-        if (isset($this->migrators[$mName])) {
-            throw new \RuntimeException(sprintf('Migrator with name "%s" already exists.', $mName));
-        }
-
-        $migrator->setContext($this->context);
-        $this->migrators[$mName] = $migrator;
+        $this->context->addMigrator($migrator);
     }
 
     public function resolveOrder($migrator, $seen = array())
@@ -55,8 +50,8 @@ class MigrationRunner
                 ));
             }
 
-            if (isset($this->migrators[$depName])) {
-                $depMigrator = $this->migrators[$depName];
+            if ($this->context->hasMigrator($depName)) {
+                $depMigrator = $this->context->getMigrator($depName);
             } else {
                 if (false == $this->ignoreMissingDependencies) {
                     throw new \Exception(sprintf(
@@ -83,7 +78,7 @@ class MigrationRunner
             return $this->orderedMigrators;
         }
 
-        foreach ($this->migrators as $migrator) {
+        foreach ($this->context->getMigrators() as $migrator) {
             if (!in_array($migrator, $this->orderedMigrators, true)) {
                 $this->resolveOrder($migrator);
             }
@@ -103,10 +98,15 @@ class MigrationRunner
         $modified = false;
 
         $moverFile = new MoverFile($file);
+        $migratorContext = new MigratorContext($this->context, $moverFile);
+        $this->migratorContexts[] = $migratorContext;
+
         foreach ($this->getOrderedMigrators() as $migrator) {
+            $runnerContext = new RunnerContext;
             if ($migrator->accepts($moverFile)) {
                 $this->log(sprintf('Migrator "%s" accepts file "%s"', $migrator->getName(), $file), 'debug');
-                $migrator->migrate($moverFile);
+
+                $migrator->migrate($migratorContext);
 
                 $diff = new Differ;
                 $originalString = $moverFile->getOriginalFile()->getRaw();
@@ -132,6 +132,12 @@ class MigrationRunner
 
         return $moverFile;
     }
+
+    public function getMigratorContexts() 
+    {
+        return $this->migratorContexts;
+    }
+    
 
     public function getContext()
     {

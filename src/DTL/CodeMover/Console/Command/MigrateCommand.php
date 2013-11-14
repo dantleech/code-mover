@@ -33,6 +33,7 @@ class MigrateCommand extends Command
         $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run');
         $this->addOption('migrator', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Migrator', array());
         $this->addOption('ignore-missing-deps', null, InputOption::VALUE_NONE, 'Ignore missing dependencies');
+        $this->addOption('todos', null, InputOption::VALUE_NONE, 'List all todos');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -51,6 +52,7 @@ class MigrateCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $migratorNames = $input->getOption('migrator');
         $ignoreMissingDeps = $input->getOption('ignore-missing-deps');
+        $showTodos = $input->getOption('todos');
 
         $mRunner = $this->initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps);
 
@@ -97,11 +99,25 @@ class MigrateCommand extends Command
             }
         }
 
-        $context = $mRunner->getContext();
-        if ($todos = $context->getTodos()) {
-            foreach ($todos as $todo) {
-                $output->writeln('todo: '.$todo);
+        $mContexts = $mRunner->getMigratorContexts();
+
+        if (true === $showTodos) {
+            foreach ($mContexts as $mContext) {
+                if ($todos = $mContext->getTodos()) {
+                    $output->writeln('');
+                    $output->writeln('todos: '.$mContext->getFile()->getPath());
+                    foreach ($todos as $todo) {
+                        $output->writeln('  - '.$todo);
+                    }
+                }
             }
+        } else {
+            $todoCount = 0;
+            foreach ($mContexts as $mContext) {
+                $todoCount += count($mContext->getTodos());
+            }
+
+            $output->writeln('<info>There are </info>'.$todoCount.' todos, use --todos to list them');
         }
     }
 
