@@ -15,6 +15,7 @@ use Symfony\CS\Fixer;
 class MigrateCommand extends Command
 {
     protected $output;
+    protected $showDiff = false;
 
     public function configure()
     {
@@ -34,6 +35,7 @@ class MigrateCommand extends Command
         $this->addOption('migrator', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Migrator', array());
         $this->addOption('ignore-missing-deps', null, InputOption::VALUE_NONE, 'Ignore missing dependencies');
         $this->addOption('todos', null, InputOption::VALUE_NONE, 'List all todos');
+        $this->addOption('diff', null, InputOption::VALUE_NONE, 'Show diff');
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -53,6 +55,7 @@ class MigrateCommand extends Command
         $migratorNames = $input->getOption('migrator');
         $ignoreMissingDeps = $input->getOption('ignore-missing-deps');
         $showTodos = $input->getOption('todos');
+        $this->showDiff = $input->getOption('diff');
 
         $mRunner = $this->initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps);
 
@@ -68,23 +71,26 @@ class MigrateCommand extends Command
             $finder->in($path);
         }
 
+        $failedValidations = array();
+
+        $mFile = $mRunner->migrate($finder);
 
         foreach ($finder as $file) {
-            $mFile = $mRunner->migrate($file);
             $content = implode("\n", $mFile->toArray());
 
             if ($fixCs) {
-                $output->writeln('<info>Applying CS Fixer</info>');
+                $output->write('<info>Applying CS Fixers</info>: ');
                 $fixer = new Fixer;
                 $fixer->registerBuiltInFixers();
                 $fixers = $fixer->getFixers();
 
                 foreach ($fixers as $fixer) {
                     if ($fixer->supports($file)) {
-                        $output->writeln('  -- '.$fixer->getName());
+                        $output->write(' '.$fixer->getName());
                         $content = $fixer->fix($file, $content);
                     }
                 }
+                $output->writeln("\n");
 
                 $mFile->setContent($content);
                 $mFile->commit();
@@ -92,6 +98,16 @@ class MigrateCommand extends Command
 
             if ($mFile && $dump) {
                 $output->writeln($mFile->dump());
+            }
+
+            $validatePhp = true;
+            if ($file->getExtension() == 'php' && $validatePhp) {
+                $phpValidText = array();
+                $out = exec('php -l '.$file->getRealPath(), $phpValidText, $exitCode);
+
+                if ($exitCode == 255) {
+                    $failedValidations[] = '<error>PHPLint returned ('.$exitCode.'): '.implode("\n", $phpValidText).'</error>';
+                }
             }
 
             if (false == $dryRun) {
@@ -118,6 +134,10 @@ class MigrateCommand extends Command
             }
 
             $output->writeln('<info>There are </info>'.$todoCount.' todos, use --todos to list them');
+        }
+
+        foreach ($failedValidations as $failedValidation) {
+            $output->writeln($failedValidations);
         }
     }
 
@@ -147,6 +167,10 @@ class MigrateCommand extends Command
         $options = array();
         if ($ignoreMissingDeps) {
             $options['ignore_missing_dependencies'] = true;
+        }
+
+        if ($this->showDiff) {
+            $options['show_diff'] = true;
         }
 
         $mRunner = new MigrationRunner($logger, $options);

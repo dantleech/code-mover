@@ -16,15 +16,17 @@ class MigrationRunner
     protected $ignoreMissingDependencies = false;
     protected $context;
     protected $migratorContexts = array();
+    protected $options = array();
 
     public function __construct(\Closure $logger = null, $options = array())
     {
         $options = array_merge(array(
             'ignore_missing_dependencies' => false,
+            'show_diff' => false,
         ), $options);
 
         $this->logger = $logger;
-        $this->ignoreMissingDependencies = $options['ignore_missing_dependencies'];
+        $this->options = $options;
         $this->context = new RunnerContext;
     }
 
@@ -93,39 +95,43 @@ class MigrationRunner
         return $this->orderedMigrators;
     }
 
-    public function migrate($file)
+    public function migrate($files)
     {
         $modified = false;
 
-        $moverFile = new MoverFile($file);
-        $migratorContext = new MigratorContext($this->context, $moverFile);
-        $this->migratorContexts[] = $migratorContext;
-
         foreach ($this->getOrderedMigrators() as $migrator) {
-            $runnerContext = new RunnerContext;
-            if ($migrator->accepts($moverFile)) {
-                $this->log(sprintf('Migrator "%s" accepts file "%s"', $migrator->getName(), $file), 'debug');
+            foreach ($files as $file) {
+                $moverFile = new MoverFile($file);
+                $migratorContext = new MigratorContext($this->context, $moverFile);
+                $this->migratorContexts[] = $migratorContext;
 
-                $migrator->migrate($migratorContext);
+                $runnerContext = new RunnerContext;
+                if ($migrator->accepts($moverFile)) {
+                    $this->log(sprintf('Migrator "%s" accepts file "%s"', $migrator->getName(), $file), 'debug');
 
-                $diff = new Differ;
-                $originalString = $moverFile->getOriginalFile()->getRaw();
-                $newString = implode("\n", $moverFile->toArray());
-                $diff = $diff->diffToArray($originalString, $newString);
+                    $migrator->migrate($migratorContext);
 
-                foreach ($diff as $el) {
-                    list($line, $stat)  = $el;
-                    if ($stat != 0) {
-                        $this->log(sprintf('%s%s',
-                            $stat == 1 ? '+' : '-',
-                            $line
-                        ), $stat == 1 ? 'diffplus' : 'diffminus');
+                    if ($this->options['show_diff']) {
+                        $diff = new Differ;
+                        $originalString = $moverFile->getOriginalFile()->getRaw();
+                        $newString = $moverFile->getRaw();
+                        $diff = $diff->diffToArray($originalString, $newString);
+
+                        foreach ($diff as $el) {
+                            list($line, $stat)  = $el;
+                            if ($stat != 0) {
+                                $this->log(sprintf('%s%s',
+                                    $stat == 1 ? '+' : '-',
+                                    $line
+                                ), $stat == 1 ? 'diffplus' : 'diffminus');
+                            }
+                        }
                     }
-                }
 
-                if ($moverFile->isModified()) {
-                    $modified = true;
-                    $moverFile->commit();
+                    if ($moverFile->isModified()) {
+                        $modified = true;
+                        $moverFile->commit();
+                    }
                 }
             }
         }

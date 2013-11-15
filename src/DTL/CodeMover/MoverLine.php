@@ -95,7 +95,7 @@ class MoverLine implements MoverLineInterface
 
     public function __toString()
     {
-        return $this->line;
+        return $this->line ? : '';
     }
 
     public function delete()
@@ -200,7 +200,8 @@ class MoverLine implements MoverLineInterface
 
         if ($started) {
             throw new \RuntimeException(sprintf(
-                'Could not find end string "%s" for tokenizeBetween method', $rightString
+                'Could not find end string "%s" for tokenizeBetween method in line', 
+                $rightString, $this->getLine()
             ));
         }
 
