@@ -26,9 +26,29 @@ class CodeFormatMigrator extends AbstractMigrator
     public function migrate(MigratorContext $context)
     {
         $file = $context->getFile();
-        $this->fixNamespaceAndUse($file);
-        $this->fixExtraSpaces($file);
-        // $this->fixIndentation($file);
+        //$this->fixNamespaceAndUse($file);
+        //$this->fixExtraSpaces($file);
+        $this->fixIndentation($file);
+        //$this->vimify($file);
+    }
+
+    protected function vimify(MoverFile $file)
+    {
+        $tmpfile = sys_get_temp_dir().DIRECTORY_SEPARATOR.'code_mover_vimify.'.$file->getSplFileInfo()->getExtension();
+        file_put_contents($tmpfile, $file->getContent());
+        exec(sprintf('vim %s -c "normal =G" -c "wq"', $tmpfile));
+        $content = file_get_contents($tmpfile);
+        $file->setContent($content);
+    }
+
+    protected function beautify(MoverFile $file)
+    {
+        $beautifier = new \PHP_Beautifier();
+        $beautifier->setInputString($file->getContent());
+        $filters = $beautifier->getFilterList();
+        new \PHP_Beautifier_Filter_IndentStyles($beautifier);
+        $beautifier->process();
+        $file->setContent($beautifier->get());
     }
 
     protected function fixNamespaceAndUse(MoverFile $file)
@@ -73,7 +93,9 @@ class CodeFormatMigrator extends AbstractMigrator
         }
 
         foreach ($file->findLines('function') as $line) {
-            $endToken = $line->tokenizeBetween('{', '}')->last();
+            if (!$endToken = $line->tokenizeBetween('{', '}')->last()) {
+                continue;
+            }
             if ($endToken->getLine()->nextLine()) {
                 if (
                     !$endToken->getLine()->nextLine()->match('^ *$')
@@ -89,9 +111,39 @@ class CodeFormatMigrator extends AbstractMigrator
     {
         $i = 0;
         foreach ($file as $line) {
-            $line->replace(' *(.*)$', str_repeat('    ', $i).'\1');
-
             $tokens = $line->tokenize();
+            $firstToken = $tokens->filterByType('WHITESPACE', true)->first();
+
+            // special cases
+            $additionalIndent = 0;
+            if ($firstToken) {
+                switch ($firstToken->getValue()) {
+                    case 'array' :
+                        $arrayLine = $line->getLine();
+                        $before = $file->getLineNeighbor($firstToken->getLine(), true);
+                        $beforeLastToken = $before->tokenize()->filterByType('WHITESPACE', true)->last();
+                        $space = ' ';
+                        if ($beforeLastToken->getValue() == '(') {
+                            $space = '';
+                        } else {
+                            $i++;
+                        }
+
+                    //    $before->setLine(rtrim($before->getLine()).$space.trim($arrayLine));
+                    //    $firstToken->getLine()->delete();
+                        break;
+                    case '->':
+                        $additionalIndent = 4;
+                        break;
+                    case '*':
+                        $continue = true;
+                        $additionalIndent = 1;
+                        break;
+                    }
+            }
+
+            $line->replace(' *(.*)$', str_repeat(' ', ($i * 4) + $additionalIndent).'\1');
+
             $tokens = $tokens->filterByType('SINGLE_CHAR');
 
             if (!$tokens->count()) {
@@ -100,7 +152,9 @@ class CodeFormatMigrator extends AbstractMigrator
 
             if (in_array($tokens->first()->getValue(), array('}', ')'))) {
                 $i -= 1;;
-                if (preg_match('&else&', $line->getLine())) {
+
+                if ($i < 0) {
+                    $i = 0;
                 }
 
                 $line->replace(' *(.*)$', str_repeat('    ', $i).'\1');
