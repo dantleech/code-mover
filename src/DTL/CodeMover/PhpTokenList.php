@@ -39,6 +39,8 @@ class PhpTokenList extends ArrayCollection
 
     public function seekType($type)
     {
+        $type = Util::tokenNormalizeTypeToString($type);
+
         while ($this->offsetExists($this->position)) {
             $token = $this->offsetGet($this->position);
 
@@ -79,6 +81,7 @@ class PhpTokenList extends ArrayCollection
 
     public function filterByType($type)
     {
+        $type = Util::tokenNormalizeTypeToString($type);
         return $this->filter(function ($el) use ($type) {
             if ($el->getType() == $type) {
                 return true;
@@ -101,6 +104,8 @@ class PhpTokenList extends ArrayCollection
 
     public function getValuesByType($type)
     {
+        $type = Util::tokenNormalizeTypeToString($type);
+
         $list = $this->filterByType($type);
         return $list->getValues();
     }

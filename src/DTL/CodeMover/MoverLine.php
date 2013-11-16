@@ -4,11 +4,10 @@ namespace DTL\CodeMover;
 
 use DTL\CodeMover\PhpTokenList;
 use DTL\CodeMover\PhpToken;
+use DTL\CodeMover\Util;
 
 class MoverLine implements MoverLineInterface
 {
-    const REGEX_DELIMITER = '/';
-
     protected $file;
     protected $originalLine;
     protected $line;
@@ -30,15 +29,15 @@ class MoverLine implements MoverLineInterface
     {
         $patterns = (array) $patterns;
         foreach ($patterns as $pattern) {
-            $pattern = $this->delimitRegex($pattern);
+            $pattern = Util::delimitRegex($pattern);
             $match = preg_match($pattern, $this->line, $matches);
 
             if ($match) {
-                return $matches;
+                return new RegExResult($matches);
             }
         }
 
-        return false;
+        return null;
     }
 
     public function matches($patterns)
@@ -56,7 +55,7 @@ class MoverLine implements MoverLineInterface
         $patterns = (array) $patterns;
         $me = $this;
         array_walk($patterns, function (&$el) use ($me) {
-            $el = $me->delimitRegex($el);
+            $el = Util::delimitRegex($el);
         });
 
         if ($replacements instanceof \Closure) {
@@ -110,15 +109,6 @@ class MoverLine implements MoverLineInterface
         }
 
         return $this;
-    }
-
-    private function delimitRegex($pattern)
-    {
-        if (substr($pattern, 0, 1) == self::REGEX_DELIMITER ) {
-            return $pattern;
-        }
-
-        return self::REGEX_DELIMITER.$pattern.self::REGEX_DELIMITER;
     }
 
     /**

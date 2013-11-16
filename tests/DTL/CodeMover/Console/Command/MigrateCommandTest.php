@@ -40,7 +40,7 @@ class MigrateCommandTest extends \PHPUnit_Framework_TestCase
                     'migrations_path' => __DIR__.'/TestMigration',
                     '--path' => array(__DIR__.'/TestMigrationTarget'),
                 ), array(), array(
-                    'Migrator "test" accepts file',
+                    'Migrator "test" accepts',
                 )
             ),
         );

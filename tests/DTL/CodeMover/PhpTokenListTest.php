@@ -11,7 +11,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
         $this->line = $this->getMockBuilder('DTL\CodeMover\MoverLine')
             ->disableOriginalConstructor()->getMock();
         $this->t1 = new PhpToken($this->line, 'FOOBAR', 'arf');
-        $this->t2 = new PhpToken($this->line, 'BARFOO', 'barf');
+        $this->t2 = new PhpToken($this->line, 'WHITESPACE', 'barf');
         $this->t3 = new PhpToken($this->line, 'FOOBAR', 'garf');
     }
 
@@ -36,7 +36,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testSeekType()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->seekType('BARFOO')->getToken();
+        $token = $tokenList->seekType(T_WHITESPACE)->getToken();
         $this->assertEquals('barf', $token->getValue());
     }
 
@@ -44,7 +44,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
         $token = $tokenList->seekValue('barf')->getToken();
-        $this->assertEquals('BARFOO', $token->getType());
+        $this->assertEquals('WHITESPACE', $token->getType());
     }
 
     /**

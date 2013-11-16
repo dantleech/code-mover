@@ -32,6 +32,30 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($isMatch, $res);
     }
 
+    public function provideMatch()
+    {
+        return array(
+            array('namespace Foo', 'namespace (.*)', array('namespace Foo', 'Foo')),
+        );
+    }
+
+    /**
+     * @dataProvider provideMatch
+     */
+    public function testMatch($line, $pattern, $expectedMatches)
+    {
+        $line = new MoverLine($this->moverFile, $line);
+        $res = $line->match($pattern);
+
+        $matches = $res->getMatches();
+        $this->assertNotNull($matches);
+        $this->assertEquals($expectedMatches, $matches);
+
+        foreach ($expectedMatches as $i => $expected) {
+            $this->assertEquals($expected, $res->getMatch($i));
+        }
+    }
+
     public function provideReplace()
     {
         return array(

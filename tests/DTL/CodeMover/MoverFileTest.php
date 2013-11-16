@@ -32,6 +32,7 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
     public function testNameMatches()
     {
         $this->assertTrue($this->file->nameMatches('/testfile/'));
+        $this->assertTrue($this->file->nameMatches('testfile'));
         $this->assertFalse($this->file->nameMatches('/bahfile/'));
     }
 

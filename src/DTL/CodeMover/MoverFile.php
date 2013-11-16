@@ -25,6 +25,7 @@ class MoverFile extends MoverLineCollection
 
     public function nameMatches($pattern)
     {
+        $pattern = Util::delimitRegex($pattern);
         return (boolean) preg_match($pattern, $this->file);
     }
 
