@@ -26,7 +26,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testValuesByType()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $values = $tokenList->valuesByType('FOOBAR');
+        $values = $tokenList->getValuesByType('FOOBAR');
 
         $this->assertEquals(array(
             'arf', 'garf'
@@ -36,14 +36,14 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testSeekType()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->seekType('BARFOO')->token();
+        $token = $tokenList->seekType('BARFOO')->getToken();
         $this->assertEquals('barf', $token->getValue());
     }
 
     public function testSeekValue()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->seekValue('barf')->token();
+        $token = $tokenList->seekValue('barf')->getToken();
         $this->assertEquals('BARFOO', $token->getType());
     }
 
@@ -70,7 +70,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testLines()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $lines = $tokenList->lines();
+        $lines = $tokenList->getLines();
         $this->assertNotNull($lines);
         $this->assertCount(1, $lines);
         $this->assertSame($this->line, $lines->first());
@@ -79,7 +79,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testToken()
     {
         $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->token();
+        $token = $tokenList->getToken();
         $this->assertSame($token, $this->t1);
     }
 
@@ -90,6 +90,6 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     public function testTokenNotFound()
     {
         $tokenList = new PhpTokenList();
-        $token = $tokenList->token();
+        $token = $tokenList->getToken();
     }
 }

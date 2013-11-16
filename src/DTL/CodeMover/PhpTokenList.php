@@ -8,7 +8,7 @@ class PhpTokenList extends ArrayCollection
 {
     protected $position = 0;
 
-    public function token()
+    public function getToken()
     {
         if ($this->offsetExists($this->position)) {
             return $this->offsetGet($this->position);
@@ -67,7 +67,7 @@ class PhpTokenList extends ArrayCollection
         return $out;
     }
 
-    public function tokensAsArray()
+    public function getTokensAsArray()
     {
         $tokens = array();
         foreach ($this as $token) {
@@ -99,10 +99,10 @@ class PhpTokenList extends ArrayCollection
         });
     }
 
-    public function valuesByType($type)
+    public function getValuesByType($type)
     {
         $list = $this->filterByType($type);
-        return $list->values();
+        return $list->getValues();
     }
 
     public function rewind()
@@ -112,7 +112,7 @@ class PhpTokenList extends ArrayCollection
         return $this;
     }
 
-    public function values()
+    public function getValues()
     {
         $values = array();
 
@@ -123,7 +123,7 @@ class PhpTokenList extends ArrayCollection
         return $values;
     }
 
-    public function lines()
+    public function getLines()
     {
         $lines = new MoverLineCollection;
         foreach ($this as $token) {

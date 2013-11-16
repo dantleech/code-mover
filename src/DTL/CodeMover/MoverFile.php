@@ -53,8 +53,9 @@ class MoverFile extends MoverLineCollection
     protected function init()
     {
         $lines = new MoverLineCollection();
+        $fileArray = file($this->file);
 
-        array_walk(file($this->file), function ($line) use ($lines) {
+        array_walk($fileArray, function ($line) use ($lines) {
             $lines->addLine($line);
         });
 
