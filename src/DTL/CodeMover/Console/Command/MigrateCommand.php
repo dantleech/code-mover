@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputOption;
 use DTL\CodeMover\MigrationRunner;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\CS\Fixer;
+use DTL\CodeMover\Migrator\PhpCsFixerMigrator;
 
 class MigrateCommand extends Command
 {
@@ -57,7 +58,18 @@ class MigrateCommand extends Command
         $showTodos = $input->getOption('todos');
         $this->showDiff = $input->getOption('diff');
 
-        $mRunner = $this->initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps);
+        $mRunnerOptions = array(
+            'ignore_missing_dependencies' => $input->getOption('ignore-missing-deps'),
+            'show_diff' => $input->getOption('diff'),
+            'dry_run' => $input->getOption('dry-run'),
+        );
+
+        $mRunner = $this->initMigrationRunner($migrationsPath, $migratorNames, $mRunnerOptions);
+
+        if ($fixCs) {
+            $csFixerMigrator = new PhpCsFixerMigrator;
+            $mRunner->addMigrator($csFixerMigrator);
+        }
 
         $finder = new Finder;
         $finder->name($name);
@@ -113,17 +125,19 @@ class MigrateCommand extends Command
         }
     }
 
-    protected function initMigrationRunner($migrationsPath, $migratorNames, $ignoreMissingDeps)
+    protected function initMigrationRunner($migrationsPath, $migratorNames, $options = array())
     {
         $finder = new Finder;
         $finder->name('*Migrator.php');
         $finder->in($migrationsPath);
 
         $output = $this->output;
-        $logger = function ($message, $type) use ($output) {
+        $start = microtime(true);
+
+        $logger = function ($message, $type) use ($output, $start) {
             switch ($type) {
                 case 'info':
-                    $mesage = sprintf('<info>%s</info>', $message);
+                    $message = sprintf('<info>%s</info>', $message);
                     break;
                 case 'debug':
                     $message = sprintf('<comment>%s</comment>', $message);
@@ -134,16 +148,11 @@ class MigrateCommand extends Command
                     $message = sprintf('<%s>%s</%s>', $type, $message, $type);
             }
 
-            $output->writeln($message);
+            $output->writeln(sprintf('[%s] %s', 
+                number_format(microtime(true) - $start, 4), 
+                $message
+            ));
         };
-        $options = array();
-        if ($ignoreMissingDeps) {
-            $options['ignore_missing_dependencies'] = true;
-        }
-
-        if ($this->showDiff) {
-            $options['show_diff'] = true;
-        }
 
         $mRunner = new MigrationRunner($logger, $options);
 

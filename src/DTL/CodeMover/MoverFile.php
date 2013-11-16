@@ -52,14 +52,14 @@ class MoverFile extends MoverLineCollection
 
     protected function init()
     {
-        $originalFile = new MoverLineCollection();
+        $lines = new MoverLineCollection();
 
-        array_walk(file($this->file), function ($line) use ($originalFile) {
-            $originalFile->addLine($line);
+        array_walk(file($this->file), function ($line) use ($lines) {
+            $lines->addLine($line);
         });
 
-        $this->originalFile = $originalFile;
-        $this->addLines($originalFile->toArray());
+        $this->originalFile = clone $lines;
+        $this->addLines($lines);
     }
 
     public function setContent($text)
@@ -107,5 +107,10 @@ class MoverFile extends MoverLineCollection
         $lastBracket = $this->tokenize()->filterByValue('}')->last();
         $prevLine = $lastBracket->getLine()->prevLine();
         $this->addLinesAfter($prevLine, $method->getLines());
+    }
+
+    public function getSplFileInfo()
+    {
+        return $this->file;
     }
 }

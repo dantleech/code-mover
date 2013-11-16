@@ -4,6 +4,8 @@ namespace DTL\CodeMover\Migrator;
 
 use Symfony\CS\Fixer;
 use DTL\CodeMover\MigratorContext;
+use DTL\CodeMover\AbstractMigrator;
+use DTL\CodeMover\MoverFile;
 
 class PhpCsFixerMigrator extends AbstractMigrator
 {
@@ -24,8 +26,9 @@ class PhpCsFixerMigrator extends AbstractMigrator
 
     public function migrate(MigratorContext $context)
     {
-        $file = $context->getFile();
-        $file = $file->getSplFileInfo();
+        $mFile = $context->getFile();
+        $content = $mFile->getRaw();
+        $file = $mFile->getSplFileInfo();
 
         $fixer = new Fixer;
         $fixer->registerBuiltInFixers();
@@ -34,9 +37,8 @@ class PhpCsFixerMigrator extends AbstractMigrator
         foreach ($fixers as $fixer) {
             if ($fixer->supports($file)) {
                 $content = $fixer->fix($file, $content);
+                $mFile->setContent($content);
             }
         }
-
-        $mFile->setContent($content);
     }
 }

@@ -101,17 +101,24 @@ class MigrationRunner
         $modified = false;
 
         foreach ($this->getOrderedMigrators() as $migrator) {
+            $this->log(sprintf('Running %s files thorugh migrator "%s"', count($files), $migrator->getName()), 'info');
+
             foreach ($files as $file) {
+                $this->log(sprintf('Processing file %s', $file->getRealPath()), 'info');
                 $moverFile = new MoverFile($file);
+                $this->log(sprintf('Created mover file'));
                 $migratorContext = new MigratorContext($this->context, $moverFile);
                 $this->migratorContexts[] = $migratorContext;
 
-                if ($migrator->accepts($moverFile)) {
-                    $this->log(sprintf('Migrator "%s" accepts file "%s"', $migrator->getName(), $file), 'debug');
-
+                if (false === $migrator->accepts($moverFile)) {
+                    $this->log(sprintf('Migrator "%s" rejects', $migrator->getName()), 'debug');
+                } else {
+                    $this->log(sprintf('Migrator "%s" accepts', $migrator->getName()), 'debug');
                     $migrator->migrate($migratorContext);
+                    $this->log(' -- Done', 'debug');
 
                     if ($this->options['show_diff']) {
+                        $this->log('Starting diff');
                         $diff = new Differ;
                         $originalString = $moverFile->getOriginalFile()->getRaw();
                         $newString = $moverFile->getRaw();
@@ -126,15 +133,21 @@ class MigrationRunner
                                 ), $stat == 1 ? 'diffplus' : 'diffminus');
                             }
                         }
+                        $this->log(' -- Done');
                     }
 
                     if ($moverFile->isModified()) {
+                        $this->log('File modified, committing');
                         $modified = true;
                         $moverFile->commit();
                         if (false === $this->options['dry_run']) {
+                            $this->log('Writing file');
                             $moverFile->write();
+                            $this->log('File written');
                         }
                     }
+
+                    $this->log('Finished processing file');
                 }
             }
         }
