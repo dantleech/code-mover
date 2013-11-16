@@ -41,6 +41,11 @@ class MoverLine implements MoverLineInterface
         return false;
     }
 
+    public function matches($patterns)
+    {
+        return $this->match($patterns) ? true : false;
+    }
+
     public function getLineNo()
     {
         return $this->file->indexOf($this) + 1;

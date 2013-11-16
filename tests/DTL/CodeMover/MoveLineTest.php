@@ -13,7 +13,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
         )->disableOriginalConstructor()->getMock();
     }
 
-    public function provideMatch()
+    public function provideMatches()
     {
         return array(
             array('namespace Foo', '/namespace/', true),
@@ -23,12 +23,12 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider provideMatch
+     * @dataProvider provideMatches
      */
-    public function testMatch($line, $pattern, $isMatch)
+    public function testMatches($line, $pattern, $isMatch)
     {
         $line = new MoverLine($this->moverFile, $line);
-        $res = $line->match($pattern);
+        $res = $line->matches($pattern);
         $this->assertEquals($isMatch, $res);
     }
 

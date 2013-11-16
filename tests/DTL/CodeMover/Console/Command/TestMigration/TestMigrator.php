@@ -4,6 +4,7 @@ namespace DTL\CodeMover\Console\Command\TestMigration;
 
 use DTL\CodeMover\AbstractMigrator;
 use DTL\CodeMover\MoverFile;
+use DTL\CodeMover\MigratorContext;
 
 class TestMigrator extends AbstractMigrator
 {
@@ -22,7 +23,7 @@ class TestMigrator extends AbstractMigrator
         return true;
     }
 
-    public function migrate(MoverFile $file)
+    public function migrate(MigratorContext $context)
     {
     }
 }

@@ -3,6 +3,7 @@
 namespace DTL\CodeMover;
 
 use DTL\CodeMover\MigrationRunner;
+use DTL\CodeMover\MigratorContext;
 
 class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
 {
@@ -15,9 +16,23 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
             $log[] = $message;
         };
 
-        $this->runner = new MigrationRunner();
-        $this->runner->setLogger($logger);
-        $this->testFile = realpath(__DIR__.'/../../stubb/testfile.txt');
+        $this->runner = new MigrationRunner($logger, array('show_diff' => true));
+        $this->testFile = realpath(__DIR__.'/../..').'/stubb/testfile.tmp.txt';
+        $this->originalTestFile = realpath(__DIR__.'/../..').'/stubb/testfile.txt';
+        $this->removeTestFile();
+        copy($this->originalTestFile, $this->testFile);
+    }
+
+    public function tearDown()
+    {
+        $this->removeTestFile();
+    }
+
+    public function removeTestFile()
+    {
+        if (file_exists($this->testFile)) {
+            unlink($this->testFile);
+        }
     }
 
     public function provideDependencyResolution()
@@ -103,8 +118,9 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
             $migrator = $this->getMock('DTL\CodeMover\MigratorInterface');
             $migrator->expects($this->once())
                 ->method('migrate')
-                ->will($this->returnCallback(function ($file) use ($mPattern, $mReplace) {
-                    $lines = $file->findLines('/'.$mPattern.'/');
+                ->will($this->returnCallback(function (MigratorContext $context) use ($mPattern, $mReplace) {
+                    $file = $context->getFile();
+                    $lines = $file->findLines($mPattern);
                     foreach ($lines as $line) {
                         $line->replace('/'.$mPattern.'/', $mReplace);
                     }
@@ -122,9 +138,10 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
             $this->runner->addMigrator($migrator);
         }
 
-        $this->runner->migrate(new \SplFileInfo($this->testFile));
-        $this->assertContains('-$foo = new Thing;', $this->log);
-        $this->assertContains('+$foo = new Bar;', $this->log);
+        $this->runner->migrate(array(
+            new \SplFileInfo($this->testFile)
+        ));
+        $this->assertContains('-$foo = new Thing;', (array) $this->log);
         $this->assertContains('+$foo = new Bar;', $this->log);
         $this->assertContains('-$foo->setOption(\'asd\', \'dsa\');', $this->log);
         $this->assertContains('+$foo->setFoo(\'asd\', \'dsa\');', $this->log);

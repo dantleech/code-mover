@@ -71,35 +71,11 @@ class MigrateCommand extends Command
             $finder->in($path);
         }
 
+        $mRunner->migrate($finder);
+
+        // validate PHP files
         $failedValidations = array();
-
-        $mFile = $mRunner->migrate($finder);
-
         foreach ($finder as $file) {
-            $content = implode("\n", $mFile->toArray());
-
-            if ($fixCs) {
-                $output->write('<info>Applying CS Fixers</info>: ');
-                $fixer = new Fixer;
-                $fixer->registerBuiltInFixers();
-                $fixers = $fixer->getFixers();
-
-                foreach ($fixers as $fixer) {
-                    if ($fixer->supports($file)) {
-                        $output->write(' '.$fixer->getName());
-                        $content = $fixer->fix($file, $content);
-                    }
-                }
-                $output->writeln("\n");
-
-                $mFile->setContent($content);
-                $mFile->commit();
-            }
-
-            if ($mFile && $dump) {
-                $output->writeln($mFile->dump());
-            }
-
             $validatePhp = true;
             if ($file->getExtension() == 'php' && $validatePhp) {
                 $phpValidText = array();
@@ -109,14 +85,10 @@ class MigrateCommand extends Command
                     $failedValidations[] = '<error>PHPLint returned ('.$exitCode.'): '.implode("\n", $phpValidText).'</error>';
                 }
             }
-
-            if (false == $dryRun) {
-                $mFile->write();
-            }
         }
 
+        // Show ToDOs
         $mContexts = $mRunner->getMigratorContexts();
-
         if (true === $showTodos) {
             foreach ($mContexts as $mContext) {
                 if ($todos = $mContext->getTodos()) {

@@ -23,6 +23,7 @@ class MigrationRunner
         $options = array_merge(array(
             'ignore_missing_dependencies' => false,
             'show_diff' => false,
+            'dry_run' => false,
         ), $options);
 
         $this->logger = $logger;
@@ -105,7 +106,6 @@ class MigrationRunner
                 $migratorContext = new MigratorContext($this->context, $moverFile);
                 $this->migratorContexts[] = $migratorContext;
 
-                $runnerContext = new RunnerContext;
                 if ($migrator->accepts($moverFile)) {
                     $this->log(sprintf('Migrator "%s" accepts file "%s"', $migrator->getName(), $file), 'debug');
 
@@ -131,12 +131,15 @@ class MigrationRunner
                     if ($moverFile->isModified()) {
                         $modified = true;
                         $moverFile->commit();
+                        if (false === $this->options['dry_run']) {
+                            $moverFile->write();
+                        }
                     }
                 }
             }
         }
 
-        return $moverFile;
+        return $this->context;
     }
 
     public function getMigratorContexts() 
