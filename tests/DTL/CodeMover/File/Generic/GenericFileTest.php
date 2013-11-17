@@ -1,18 +1,21 @@
 <?php
 
-namespace DTL\CodeMover;
+namespace DTL\CodeMover\File\Generic;
 
-class MoverFileTest extends \PHPUnit_Framework_TestCase
+use DTL\CodeMover\File\Generic\GenericFile;
+use DTL\CodeMover\File\Php\PhpFile;
+
+class GenericFileTest extends \PHPUnit_Framework_TestCase
 {
     protected $file;
 
     public function setUp()
     {
-        $testFile = realpath(__DIR__.'/../..').'/stubb/testfile.txt';
-        $testPhpClassFile = realpath(__DIR__.'/../..').'/stubb/testphpclass.php';
-        $this->file = new MoverFile(new \SplFileInfo($testFile));
-        $this->phpFile = new MoverFile(new \SplFileInfo($testPhpClassFile));
-        $this->newFile = realpath(__DIR__.'/../..').'/stubb/tmp/newfile.txt';
+        $testFile = realpath(__DIR__.'/../../../..').'/stubb/testfile.txt';
+        $testPhpClassFile = realpath(__DIR__.'/../../../..').'/stubb/testphpclass.php';
+        $this->file = new GenericFile(new \SplFileInfo($testFile));
+        $this->phpFile = new PhpFile(new \SplFileInfo($testPhpClassFile));
+        $this->newFile = realpath(__DIR__.'/../../../..').'/stubb/tmp/newfile.txt';
         $this->removeNewFile();
     }
 
@@ -127,7 +130,7 @@ class MoverFileTest extends \PHPUnit_Framework_TestCase
     public function testPath()
     {
         $path = $this->file->getPath();
-        $this->assertEquals(realpath(__DIR__.'/../../stubb').'/testfile.txt', $path);
+        $this->assertEquals(realpath(__DIR__.'/../../../../stubb').'/testfile.txt', $path);
 
         $this->file->setPath('foobar');
         $this->assertEquals('foobar', $this->file->getPath());

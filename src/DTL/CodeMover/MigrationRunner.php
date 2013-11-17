@@ -5,6 +5,7 @@ namespace DTL\CodeMover;
 use SebastianBergmann\Diff\Differ;
 use DTL\CodeMover\RunnerContext;
 use Psr\Log\LoggerInterface;
+use DTL\CodeMover\File\Factory as FileFactory;
 
 class MigrationRunner
 {
@@ -27,6 +28,7 @@ class MigrationRunner
         $this->logger = $logger;
         $this->options = $options;
         $this->context = new RunnerContext;
+        $this->fileFactory = new FileFactory;
     }
 
     public function addMigrator(MigratorInterface $migrator)
@@ -103,7 +105,9 @@ class MigrationRunner
 
             foreach ($files as $file) {
                 $this->logger->debug(sprintf('<comment>Processing file</comment>: %s', $file->getRealPath()));
-                $moverFile = new MoverFile($file);
+
+                $moverFile = $this->fileFactory->getFile($file);
+
                 $this->logger->debug('Created mover file');
                 $migratorContext = new MigratorContext($this->context, $moverFile);
                 $this->migratorContexts[] = $migratorContext;

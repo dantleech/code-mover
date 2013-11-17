@@ -1,6 +1,8 @@
 <?php
 
-namespace DTL\CodeMover;
+namespace DTL\CodeMover\Tokenizer\Php;
+
+use DTL\CodeMover\Line;
 
 class PhpToken
 {
@@ -8,7 +10,7 @@ class PhpToken
     protected $tokenType;
     protected $tokenValue;
 
-    public function __construct(MoverLine $line, $tokenType, $tokenValue)
+    public function __construct(Line $line, $tokenType, $tokenValue)
     {
         $this->line = $line;
         $this->tokenType = $tokenType;

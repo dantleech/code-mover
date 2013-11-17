@@ -1,8 +1,10 @@
 <?php
 
-namespace DTL\CodeMover;
+namespace DTL\CodeMover\Tokenizer\Php;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use DTL\CodeMover\Util;
+use DTL\CodeMover\LineCollection;
 
 class PhpTokenList extends ArrayCollection
 {
@@ -130,7 +132,7 @@ class PhpTokenList extends ArrayCollection
 
     public function getLines()
     {
-        $lines = new MoverLineCollection;
+        $lines = new LineCollection;
         foreach ($this as $token) {
             if (!$lines->contains($token->getLine())) {
                 $lines->add($token->getLine());

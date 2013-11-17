@@ -2,11 +2,13 @@
 
 namespace DTL\CodeMover;
 
+use DTL\CodeMover\Tokenizer\Php\PhpToken;
+
 class PhpTokenTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->line = $this->getMockBuilder('DTL\CodeMover\MoverLine')
+        $this->line = $this->getMockBuilder('DTL\CodeMover\Line')
             ->disableOriginalConstructor()->getMock();
     }
 

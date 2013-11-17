@@ -1,14 +1,14 @@
 <?php
 
-namespace DTL\CodeMover;
+namespace DTL\CodeMover\File\Php;
 
-use DTL\CodeMover\PhpMethod;
+use DTL\CodeMover\File\Php\PhpMethod;
 
 class PhpMethodTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->file = $this->getMockBuilder('DTL\CodeMover\MoverFile')
+        $this->file = $this->getMockBuilder('DTL\CodeMover\AbstractFile')
             ->disableOriginalConstructor()->getMock();
 
         $this->phpMethod = new PhpMethod($this->file, 'public', 'foobar', 'Foobar $foobar');

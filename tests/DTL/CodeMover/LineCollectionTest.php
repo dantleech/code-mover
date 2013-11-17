@@ -2,18 +2,18 @@
 
 namespace DTL\CodeMover;
 
-class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
+class LineCollectionTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->line1 = $this->getMockBuilder('DTL\CodeMover\MoverLine')
+        $this->line1 = $this->getMockBuilder('DTL\CodeMover\Line')
             ->disableOriginalConstructor()->getMock();
-        $this->line2 = $this->getMockBuilder('DTL\CodeMover\MoverLine')
+        $this->line2 = $this->getMockBuilder('DTL\CodeMover\Line')
             ->disableOriginalConstructor()->getMock();
-        $this->line3 = $this->getMockBuilder('DTL\CodeMover\MoverLine')
+        $this->line3 = $this->getMockBuilder('DTL\CodeMover\Line')
             ->disableOriginalConstructor()->getMock();
 
-        $this->lineCollection = new MoverLineCollection(array(
+        $this->lineCollection = new LineCollection(array(
             $this->line1,
             $this->line2,
         ));
@@ -43,7 +43,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testGetLineNoSingle()
     {
-        $lc = new MoverLineCollection(array(
+        $lc = new LineCollection(array(
             $this->line1
         ));
         $this->line1->expects($this->once())
@@ -62,7 +62,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testGetLineNoEmpty()
     {
-        $lc = new MoverLineCollection;
+        $lc = new LineCollection;
         $lc->getLineNo();
     }
 
@@ -77,7 +77,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testTokenizeStatement()
     {
-        $lc = new MoverLineCollection(array(
+        $lc = new LineCollection(array(
             $this->line1
         ));
         $this->line1->expects($this->once())
@@ -90,7 +90,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testTokenizeStatementEmpty()
     {
-        $lc = new MoverLineCollection(array(
+        $lc = new LineCollection(array(
         ));
         $res = $lc->tokenizeStatement();
     }
@@ -147,7 +147,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
      */
     public function testTokenizeBetween($lines, $left, $right, $expectedNb)
     {
-        $lc = new MoverLineCollection();
+        $lc = new LineCollection();
         $lc->addLines($lines);
 
         if ($expectedNb === 'exception') {
@@ -198,7 +198,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testNeighborLineNull()
     {
-        $lc = new MoverLineCollection();
+        $lc = new LineCollection();
         $res = $lc->nextLine();
         $this->assertNull($res);
 
@@ -238,7 +238,7 @@ class MoverLineCollectionTest extends \PHPUnit_Framework_TestCase
 
     public function testGetSingle()
     {
-        $lc = new MoverLineCollection();
+        $lc = new LineCollection();
         $lc->add($this->line1);
         $res = $lc->getSingle();
         $this->assertSame($this->line1, $res);

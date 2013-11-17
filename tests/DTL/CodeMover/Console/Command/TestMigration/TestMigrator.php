@@ -3,8 +3,8 @@
 namespace DTL\CodeMover\Console\Command\TestMigration;
 
 use DTL\CodeMover\AbstractMigrator;
-use DTL\CodeMover\MoverFile;
 use DTL\CodeMover\MigratorContext;
+use DTL\CodeMover\AbstractFile;
 
 class TestMigrator extends AbstractMigrator
 {
@@ -18,7 +18,7 @@ class TestMigrator extends AbstractMigrator
         return array();
     }
 
-    public function accepts(MoverFile $file)
+    public function accepts(AbstractFile $file)
     {
         return true;
     }

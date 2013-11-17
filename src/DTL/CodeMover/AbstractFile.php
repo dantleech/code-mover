@@ -2,10 +2,10 @@
 
 namespace DTL\CodeMover;
 
-use DTL\CodeMover\MoverLine;
+use DTL\CodeMover\Line;
 use Symfony\Component\Filesystem\Filesystem;
 
-class MoverFile extends MoverLineCollection
+abstract class AbstractFile extends LineCollection
 {
     protected $file;
     protected $originalFile;
@@ -53,7 +53,7 @@ class MoverFile extends MoverLineCollection
 
     protected function init()
     {
-        $lines = new MoverLineCollection();
+        $lines = new LineCollection();
         $fileArray = file($this->file);
 
         array_walk($fileArray, function ($line) use ($lines) {
@@ -78,7 +78,7 @@ class MoverFile extends MoverLineCollection
 
     public function commit()
     {
-        $this->originalFile = new MoverLineCollection();
+        $this->originalFile = new LineCollection();
         foreach ($this as $line) {
             $this->originalFile[] = $line->getLine();
         }

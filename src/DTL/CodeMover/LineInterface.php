@@ -5,7 +5,7 @@ namespace DTL\CodeMover;
 use DTL\CodeMover\PhpTokenList;
 use DTL\CodeMover\PhpToken;
 
-interface MoverLineInterface
+interface LineInterface
 {
     public function match($patterns);
 

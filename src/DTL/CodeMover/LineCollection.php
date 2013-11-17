@@ -3,8 +3,9 @@
 namespace DTL\CodeMover;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use DTL\CodeMover\Tokenizer\Php\PhpTokenList;
 
-class MoverLineCollection extends ArrayCollection implements MoverLineInterface
+class LineCollection extends ArrayCollection implements LineInterface
 {
     public function match($patterns)
     {
@@ -74,7 +75,7 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
     {
         // note we return a collection even for a singular method because
         // we want not to crash when lines do not exist.
-        $lines = new MoverLineCollection();
+        $lines = new LineCollection();
         foreach ($this as $line) {
             if ($line->match($pattern)) {
                 $lines->add($line);
@@ -89,7 +90,7 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
     {
         $patterns = (array) $patterns;
 
-        $lineCollection = new MoverLineCollection();
+        $lineCollection = new LineCollection();
         foreach($this as $line) {
             if ($line->match($patterns)) {
                 $lineCollection->add($line);
@@ -194,10 +195,10 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
             if ($i == $offset) {
 
                 foreach ($lines as $line) {
-                    if ($line instanceof MoverLine) {
+                    if ($line instanceof Line) {
                         $newLines[] = $line;
                     } else {
-                        $newLines[] = new MoverLine($this, $line);
+                        $newLines[] = new Line($this, $line);
                     }
                 }
             }
@@ -207,7 +208,7 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
 
         if ($offset == -1) {
             foreach ($lines as $line) {
-                $newLines[] = new MoverLine($this, $line);
+                $newLines[] = new Line($this, $line);
             }
         }
 
@@ -220,31 +221,31 @@ class MoverLineCollection extends ArrayCollection implements MoverLineInterface
         return $this;
     }
 
-    public function addLinesAfter(MoverLineInterface $targetLine, $lines)
+    public function addLinesAfter(LineInterface $targetLine, $lines)
     {
         $offset = $this->indexOf($targetLine->getSingle());
         $this->addLines($lines, $offset + 1);
     }
 
-    public function addLinesBefore(MoverLineInterface $targetLine, $lines)
+    public function addLinesBefore(LineInterface $targetLine, $lines)
     {
         $offset = $this->indexOf($targetLine->getSingle());
         $this->addLines($lines, $offset);
     }
 
-    public function addLineAfter(MoverLineInterface $targetLine, $line)
+    public function addLineAfter(LineInterface $targetLine, $line)
     {
         $offset = $this->indexOf($targetLine->getSingle());
         $this->addLinesAfter($targetLine, array($line), $offset + 1);
     }
 
-    public function addLineBefore(MoverLineInterface $targetLine, $line)
+    public function addLineBefore(LineInterface $targetLine, $line)
     {
         $offset = $this->indexOf($targetLine->getSingle());
         $this->addLinesBefore($targetLine, array($line));
     }
 
-    public function getLineNeighbor(MoverLine $line, $before = false)
+    public function getLineNeighbor(Line $line, $before = false)
     {
         $index = $this->indexOf($line);
         if ($before) {

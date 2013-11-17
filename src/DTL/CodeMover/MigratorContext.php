@@ -3,13 +3,14 @@
 namespace DTL\CodeMover;
 
 use DTL\CodeMover\MoverFile;
+use DTL\CodeMover\AbstractFile;
 
 class MigratorContext
 {
     protected $parameters = array();
     protected $todos = array();
 
-    public function __construct(RunnerContext $runnerContext, MoverFile $file)
+    public function __construct(RunnerContext $runnerContext, AbstractFile $file)
     {
         $this->runnerContext = $runnerContext;
         $this->file = $file;

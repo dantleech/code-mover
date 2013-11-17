@@ -2,14 +2,16 @@
 
 namespace DTL\CodeMover;
 
-class MoverLineTest extends \PHPUnit_Framework_TestCase
+use DTL\CodeMover\Line;
+
+class LineTest extends \PHPUnit_Framework_TestCase
 {
     protected $moverFile;
 
     public function setUp()
     {
         $this->moverFile = $this->getMockBuilder(
-            'DTL\CodeMover\MoverFile'
+            'DTL\CodeMover\AbstractFile'
         )->disableOriginalConstructor()->getMock();
     }
 
@@ -27,7 +29,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
      */
     public function testMatches($line, $pattern, $isMatch)
     {
-        $line = new MoverLine($this->moverFile, $line);
+        $line = new Line($this->moverFile, $line);
         $res = $line->matches($pattern);
         $this->assertEquals($isMatch, $res);
     }
@@ -44,7 +46,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
      */
     public function testMatch($line, $pattern, $expectedMatches)
     {
-        $line = new MoverLine($this->moverFile, $line);
+        $line = new Line($this->moverFile, $line);
         $res = $line->match($pattern);
 
         $matches = $res->getMatches();
@@ -73,7 +75,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
      */
     public function testReplace($line, $pattern, $replacement, $expected)
     {
-        $line = new MoverLine($this->moverFile, $line);
+        $line = new Line($this->moverFile, $line);
         $res = $line->replace($pattern, $replacement);
         $this->assertEquals($expected, (string) $line);
         $this->assertSame($line, $res, 'Fluid interface OK');
@@ -81,7 +83,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
 
     public function testDelete()
     {
-        $line = new MoverLine($this->moverFile, 'This is a line');
+        $line = new Line($this->moverFile, 'This is a line');
         $this->moverFile->expects($this->once())
             ->method('removeElement')
             ->with($line)
@@ -96,13 +98,13 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
      */
     public function testDeleteNull()
     {
-        $line = new MoverLine($this->moverFile, 'This is a line');
+        $line = new Line($this->moverFile, 'This is a line');
         $res = $line->delete();
     }
 
     public function testTokenize()
     {
-        $line = new MoverLine($this->moverFile, '$this;');
+        $line = new Line($this->moverFile, '$this;');
         $tokenList = $line->tokenize()->getTokensAsArray();
         $this->assertEquals(array(
             array('VARIABLE', '$this'),
@@ -123,8 +125,8 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
      */
     public function testNextPrevLine($type)
     {
-        $line = new MoverLine($this->moverFile, 'Line the Central');
-        $siblingLine = new MoverLine($this->moverFile, 'Line the sibling');
+        $line = new Line($this->moverFile, 'Line the Central');
+        $siblingLine = new Line($this->moverFile, 'Line the sibling');
         $offset = $type == 'next' ? 6 : 4;
 
         $this->moverFile->expects($this->once())
@@ -141,14 +143,14 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
 
     public function testNextPrevLineNull()
     {
-        $line = new MoverLine($this->moverFile, 'Line the Central');
+        $line = new Line($this->moverFile, 'Line the Central');
         $this->assertNull($line->nextLine());
         $this->assertNull($line->prevLine());
     }
 
     public function testHasChanged()
     {
-        $line = new MoverLine($this->moverFile, 'Line the Original');
+        $line = new Line($this->moverFile, 'Line the Original');
         $line->setLine('Line the Second');
         $res = $line->hasChanged();
 
@@ -160,9 +162,9 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
 
     public function testTokenizeStatement()
     {
-        $l1 = new MoverLine($this->moverFile, '$options = array(');
-        $l2 = new MoverLine($this->moverFile, '  "foobar",');
-        $l3 = new MoverLine($this->moverFile, ');');
+        $l1 = new Line($this->moverFile, '$options = array(');
+        $l2 = new Line($this->moverFile, '  "foobar",');
+        $l3 = new Line($this->moverFile, ');');
 
         $this->moverFile->expects($this->exactly(2))
             ->method('getLineNeighbor')
@@ -177,7 +179,7 @@ class MoverLineTest extends \PHPUnit_Framework_TestCase
 
     public function testTokenizeStatementNoTerminator()
     {
-        $l1 = new MoverLine($this->moverFile, '$options = array(');
+        $l1 = new Line($this->moverFile, '$options = array(');
 
         $this->moverFile->expects($this->exactly(1))
             ->method('getLineNeighbor')

@@ -1,6 +1,9 @@
 <?php
 
-namespace DTL\CodeMover;
+namespace DTL\CodeMover\File\Php;
+
+use DTL\CodeMover\AbstractFile;
+use DTL\CodeMover\LineCollection;
 
 class PhpMethod
 {
@@ -10,7 +13,7 @@ class PhpMethod
     protected $name;
     protected $argumentString;
 
-    public function __construct(MoverFile $file, $type = 'public', $name, $argumentString)
+    public function __construct(AbstractFile $file, $type = 'public', $name, $argumentString)
     {
         $this->type = $type;
         $this->name = $name;
@@ -35,7 +38,7 @@ class PhpMethod
 
     public function getLines() 
     {
-        $lines = new MoverLineCollection();
+        $lines = new LineCollection();
         $lines->addLines(array(
             sprintf('%s function %s(%s)'."\n", $this->type, $this->name, $this->argumentString),
             '{'

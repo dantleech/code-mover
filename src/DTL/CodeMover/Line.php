@@ -2,17 +2,17 @@
 
 namespace DTL\CodeMover;
 
-use DTL\CodeMover\PhpTokenList;
-use DTL\CodeMover\PhpToken;
 use DTL\CodeMover\Util;
+use DTL\CodeMover\Tokenizer\Php\PhpTokenList;
+use DTL\CodeMover\Tokenizer\Php\PhpToken;
 
-class MoverLine implements MoverLineInterface
+class Line implements LineInterface
 {
     protected $file;
     protected $originalLine;
     protected $line;
 
-    public function __construct(MoverLineCollection $file, $line)
+    public function __construct(LineCollection $file, $line)
     {
         $line = str_replace("\n", "", $line);
         $this->line = $line;

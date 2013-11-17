@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use DTL\CodeMover\MoverFile;
 use DTL\CodeMover\MigratorContext;
+use DTL\CodeMover\AbstractFile;
 
 interface MigratorInterface
 {
@@ -11,7 +12,7 @@ interface MigratorInterface
 
     public function getDependencies();
 
-    public function accepts(MoverFile $file);
+    public function accepts(AbstractFile $file);
 
     public function migrate(MigratorContext $context);
 }
