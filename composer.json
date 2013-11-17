@@ -20,6 +20,7 @@
         "symfony/debug": "~2.3",
         "symfony/finder": "~2.3",
         "sebastian/diff": "~1.1",
+        "psr/log": "1.0.0",
         "fabpot/php-cs-fixer": "dev-updated_diff_dep"
     },
     "autoload": {

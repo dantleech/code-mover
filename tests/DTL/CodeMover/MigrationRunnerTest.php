@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use DTL\CodeMover\MigrationRunner;
 use DTL\CodeMover\MigratorContext;
+use Psr\Log\AbstractLogger;
 
 class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
 {
@@ -12,9 +13,12 @@ class MigrationRunnerTest extends \PHPUnit_Framework_TestCase
         $this->log = new \ArrayObject();
         $log = $this->log;
 
-        $logger = function ($message, $type) use ($log) {
-            $log[] = $message;
-        };
+        $logger = $this->getMockForAbstractClass('Psr\Log\AbstractLogger');
+        $logger->expects($this->any())
+            ->method('log')
+            ->will($this->returnCallback(function ($level, $message, $context) use ($log) {
+                $this->log[] = $message;
+            }));
 
         $this->runner = new MigrationRunner($logger, array('show_diff' => true));
         $this->testFile = realpath(__DIR__.'/../..').'/stubb/testfile.tmp.txt';

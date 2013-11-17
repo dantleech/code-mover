@@ -12,6 +12,7 @@ use DTL\CodeMover\MigrationRunner;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\CS\Fixer;
 use DTL\CodeMover\Migrator\PhpCsFixerMigrator;
+use DTL\CodeMover\Console\ConsoleLogger;
 
 class MigrateCommand extends Command
 {
@@ -134,26 +135,8 @@ class MigrateCommand extends Command
         $output = $this->output;
         $start = microtime(true);
 
-        $logger = function ($message, $type) use ($output, $start) {
-            switch ($type) {
-                case 'info':
-                    $message = sprintf('<info>%s</info>', $message);
-                    break;
-                case 'debug':
-                    $message = sprintf('<comment>%s</comment>', $message);
-                    break;
-                case null:
-                    break;
-                default:
-                    $message = sprintf('<%s>%s</%s>', $type, $message, $type);
-            }
 
-            $output->writeln(sprintf('[%s] %s', 
-                number_format(microtime(true) - $start, 4), 
-                $message
-            ));
-        };
-
+        $logger = new ConsoleLogger($output);
         $mRunner = new MigrationRunner($logger, $options);
 
         $migratorFiles = array();

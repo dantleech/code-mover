@@ -2,14 +2,12 @@
 
 namespace DTL\CodeMover;
 
-use SebastianBergmann\Diff\Diff;
 use SebastianBergmann\Diff\Differ;
 use DTL\CodeMover\RunnerContext;
+use Psr\Log\LoggerInterface;
 
 class MigrationRunner
 {
-    use LoggableTrait;
-
     protected $migrators = array();
     protected $order = array();
     protected $orderedMigrators = array();
@@ -18,7 +16,7 @@ class MigrationRunner
     protected $migratorContexts = array();
     protected $options = array();
 
-    public function __construct(\Closure $logger = null, $options = array())
+    public function __construct(LoggerInterface $logger = null, $options = array())
     {
         $options = array_merge(array(
             'ignore_missing_dependencies' => false,
@@ -91,7 +89,7 @@ class MigrationRunner
         foreach ($this->orderedMigrators as $mig) {
             $keys[] = $mig->getName();
         }
-        $this->log('Resolved migrator order: '.implode(', ', $keys));
+        $this->logger->info('<info>Resolved migrator order</info>: '.implode(', ', $keys));
 
         return $this->orderedMigrators;
     }
@@ -101,24 +99,24 @@ class MigrationRunner
         $modified = false;
 
         foreach ($this->getOrderedMigrators() as $migrator) {
-            $this->log(sprintf('Running %s files thorugh migrator "%s"', count($files), $migrator->getName()), 'info');
+            $this->logger->info(sprintf('<info>Running %s files thorugh migrator</info>: %s', count($files), $migrator->getName()));
 
             foreach ($files as $file) {
-                $this->log(sprintf('Processing file %s', $file->getRealPath()), 'info');
+                $this->logger->debug(sprintf('<comment>Processing file</comment>: %s', $file->getRealPath()));
                 $moverFile = new MoverFile($file);
-                $this->log(sprintf('Created mover file'));
+                $this->logger->debug('Created mover file');
                 $migratorContext = new MigratorContext($this->context, $moverFile);
                 $this->migratorContexts[] = $migratorContext;
 
                 if (false === $migrator->accepts($moverFile)) {
-                    $this->log(sprintf('Migrator "%s" rejects', $migrator->getName()), 'debug');
+                    $this->logger->debug(sprintf('<comment>Migrator "%s" rejects</comment>', $migrator->getName()));
                 } else {
-                    $this->log(sprintf('Migrator "%s" accepts', $migrator->getName()), 'debug');
+                    $this->logger->debug(sprintf('<info>Migrator "%s" accepts, processing</info>', $migrator->getName()));
                     $migrator->migrate($migratorContext);
-                    $this->log(' -- Done', 'debug');
+                    $this->logger->debug('  Done processing');
 
                     if ($this->options['show_diff']) {
-                        $this->log('Starting diff');
+                        $this->logger->debug('  Starting diff');
                         $diff = new Differ;
                         $originalString = $moverFile->getOriginalFile()->getRaw();
                         $newString = $moverFile->getRaw();
@@ -127,27 +125,27 @@ class MigrationRunner
                         foreach ($diff as $el) {
                             list($line, $stat)  = $el;
                             if ($stat != 0) {
-                                $this->log(sprintf('%s%s',
+                                $this->logger->info(sprintf('%s%s',
                                     $stat == 1 ? '+' : '-',
                                     $line
-                                ), $stat == 1 ? 'diffplus' : 'diffminus');
+                                ), array('style' => $stat == 1 ? 'diffplus' : 'diffminus'));
                             }
                         }
-                        $this->log(' -- Done');
+                        $this->logger->debug(' -- Done');
                     }
 
                     if ($moverFile->isModified()) {
-                        $this->log('File modified, committing');
+                        $this->logger->debug('  File modified, committing');
                         $modified = true;
                         $moverFile->commit();
                         if (false === $this->options['dry_run']) {
-                            $this->log('Writing file');
+                            $this->logger->debug('  Writing file');
                             $moverFile->write();
-                            $this->log('File written');
+                            $this->logger->debug('  File written');
                         }
                     }
 
-                    $this->log('Finished processing file');
+                    $this->logger->debug('Finished processing file');
                 }
             }
         }

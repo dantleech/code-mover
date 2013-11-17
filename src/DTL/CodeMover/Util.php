@@ -47,7 +47,7 @@ class Util
         return $tokenMap[$type];
     }
 
-    public function tokenNormalizeTypeToString($type)
+    public static function tokenNormalizeTypeToString($type)
     {
         if (is_numeric($type)) {
             return self::tokenTypeIntToString($type);
