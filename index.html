@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Code Mover : Library for code migration/refactoring automization" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Code Mover</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/dantleech/code-mover">View on GitHub</a>
+
+          <h1 id="project_title">Code Mover</h1>
+          <h2 id="project_tagline">Library for code migration/refactoring automization</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/dantleech/code-mover/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/dantleech/code-mover/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="code-mover" class="anchor" href="#code-mover"><span class="octicon octicon-link"></span></a>Code Mover</h1>
+
+<p>Small library for migrating code, its sort of analagous to database migrations
+but instead of applying changes to a database, you apply it to code.</p>
+
+<p><em>Note this is a proof of concept</em> at the moment and has much work to be done.</p>
+
+<p>This allows you to write and refine code migrations for massive API changes and
+refactorings.</p>
+
+<div class="highlight highlight-php"><pre><span class="c1">// app/CodeMoverMigrations/FormFieldMigrator.php</span>
+
+<span class="k">use</span> <span class="nx">DTL\CodeMover\AbstractMigrator</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">DTL\CodeMover\MoverFile</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">FormFieldMigrator</span> <span class="k">extends</span> <span class="nx">AbstractMigrator</span>
+<span class="p">{</span>
+    <span class="k">protected</span> <span class="nv">$fieldTypeMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+    <span class="p">);</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">getName</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="s1">'form_fields'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">getDependencies</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">array</span><span class="p">(</span><span class="s1">'namespaces'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">accepts</span><span class="p">(</span><span class="nx">MoverFile</span> <span class="nv">$file</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$file</span><span class="o">-&gt;</span><span class="na">nameMatches</span><span class="p">(</span><span class="s1">'*Form.php'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">migrate</span><span class="p">(</span><span class="nx">MoverFile</span> <span class="nv">$file</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$file</span><span class="o">-&gt;</span><span class="na">findLine</span><span class="p">(</span><span class="s1">'.*foobar.*'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">replace</span><span class="p">(</span><span class="s1">'foobar'</span><span class="p">,</span> <span class="s1">'barfoo'</span><span class="p">);</span>
+
+        <span class="nv">$file</span><span class="o">-&gt;</span><span class="na">findLines</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+            <span class="s1">'use .*?Field;'</span><span class="p">,</span>
+            <span class="s1">'use .*Group;'</span>
+        <span class="p">))</span><span class="o">-&gt;</span><span class="na">delete</span><span class="p">();</span>
+
+        <span class="nv">$file</span><span class="o">-&gt;</span><span class="na">findLines</span><span class="p">(</span><span class="s1">'$this-&gt;add\(new .*?Field'</span><span class="p">)</span>
+            <span class="o">-&gt;</span><span class="na">replace</span><span class="p">(</span><span class="s1">'\$this-&gt;add\(new (.*?)Field\(\'(.*?)\''</span><span class="p">,</span> <span class="k">function</span> <span class="p">(</span><span class="nv">$matches</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nv">$fieldType</span> <span class="o">=</span> <span class="nx">strtolower</span><span class="p">(</span><span class="nv">$matches</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+                <span class="k">return</span> <span class="s1">'$this-&gt;add('</span><span class="o">.</span><span class="nv">$matches</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="s1">', '</span><span class="o">.</span><span class="nv">$fieldType</span><span class="o">.</span><span class="s1">'\''</span><span class="p">;</span>
+            <span class="p">});</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>The above migrator will:</p>
+
+<ul>
+<li>Replace <code>foobar</code> with <code>barfoo</code> on lines matching regex <code>.*foobar.*</code>
+</li>
+<li>Only process files matching the regex pattern <code>*Form.php</code>;</li>
+<li>Delete all lines that match either <code>use .*Field;</code> or <code>use .*Group</code>
+</li>
+<li>Will replace lines like <code>$this-&gt;add(new TextAreaField('field_name')</code> with <code>$this-&gt;add('field_name', 'textarea');</code>
+</li>
+</ul><p>You can run it on some code:</p>
+
+<div class="highlight highlight-bash"><pre>php bin/codemover.php migrate ~/myproject/app/CodeMoverMigrations <span class="se">\</span>
+    --path ~/myproject/src/Bundle1 <span class="se">\</span>
+    --path ~/myproject/src/Bundle2 <span class="se">\</span>
+    --name <span class="s2">"*CreateForm.php"</span>
+</pre></div>
+
+<p>This will:</p>
+
+<ul>
+<li>Run all the migration classes in <code>~/myproject/app/CodeMoverMigrations</code>
+</li>
+<li>On the code contained in <code>~/myproject/src/Bundle1</code> and <code>~/myproject/src/Bundle2</code>
+</li>
+<li>Only on filenames matching <code>*CreateForm.php</code>
+</li>
+</ul><p>And generate some output like:</p>
+
+<div class="highlight highlight-bash"><pre>Adding migrator: FormFieldMigrator
+Adding migrator: NamespacesMigrator
+Resolved migrator order: namespaces, form_fields
+Migrator <span class="s2">"namespaces"</span> accepts file <span class="s2">"/home/daniel/www/yProximite/yProx/src/Ylly/CmsBundle/Form/Admin/SiteCreateForm.php"</span>
+  -namespace Ylly<span class="se">\C</span>msBundle<span class="se">\F</span>orm<span class="se">\A</span>dmin;
+  +namespace Ylly<span class="se">\C</span>msBundle<span class="se">\F</span>orm<span class="se">\T</span>ype<span class="se">\A</span>dmin;
+Migrator <span class="s2">"form_fields"</span> accepts file <span class="s2">"/home/daniel/www/yProximite/yProx/src/Ylly/CmsBundle/Form/Admin/SiteCreateForm.php"</span>
+  -use Ylly<span class="se">\O</span>ldFormBundle<span class="se">\F</span>orm<span class="se">\T</span>extField;
+  -use Ylly<span class="se">\O</span>ldFormBundle<span class="se">\F</span>orm<span class="se">\C</span>hoiceField;
+  -use Ylly<span class="se">\O</span>ldFormBundle<span class="se">\F</span>orm<span class="se">\C</span>heckboxField;
+  -use Ylly<span class="se">\O</span>ldFormBundle<span class="se">\F</span>orm<span class="se">\F</span>ieldGroup;
+  -use Ylly<span class="se">\C</span>msBundle<span class="se">\I</span>nheritance<span class="se">\F</span>orm<span class="se">\I</span>nheritanceField;
+  -            <span class="nv">$this</span>-&gt;add<span class="o">(</span>new ChoiceField<span class="o">(</span><span class="s1">'company'</span>, array<span class="o">(</span>
+  +            <span class="nv">$this</span>-&gt;add<span class="o">(</span>company, choice<span class="s1">', array(</span>
+<span class="s1">  -            $this-&gt;add(new TextField('</span>bundleName<span class="s1">'));</span>
+<span class="s1">  +            $this-&gt;add(bundleName, text'</span><span class="o">))</span>;
+  -        <span class="nv">$this</span>-&gt;add<span class="o">(</span>new TextField<span class="o">(</span><span class="s1">'title'</span><span class="o">))</span>;
+  -        <span class="nv">$this</span>-&gt;add<span class="o">(</span>new TextField<span class="o">(</span><span class="s1">'host'</span><span class="o">))</span>;
+  -        <span class="nv">$this</span>-&gt;add<span class="o">(</span>new TextField<span class="o">(</span><span class="s1">'localesAsCsv'</span><span class="o">))</span>;
+  -        <span class="nv">$this</span>-&gt;add<span class="o">(</span>new TextField<span class="o">(</span><span class="s1">'defaultLocale'</span><span class="o">))</span>;
+  +        <span class="nv">$this</span>-&gt;add<span class="o">(</span>title, text<span class="s1">'));</span>
+<span class="s1">  +        $this-&gt;add(host, text'</span><span class="o">))</span>;
+  +        <span class="nv">$this</span>-&gt;add<span class="o">(</span>localesAsCsv, text<span class="s1">'));</span>
+<span class="s1">  +        $this-&gt;add(defaultLocale, text'</span><span class="o">))</span>;
+  -        <span class="nv">$this</span>-&gt;add<span class="o">(</span>new ChoiceField<span class="o">(</span><span class="s1">'statisticsEngine'</span>, array<span class="o">(</span><span class="s1">'choices'</span> <span class="o">=</span>&gt; <span class="nv">$statisticsEngines</span><span class="o">)))</span>;
+  +        <span class="nv">$this</span>-&gt;add<span class="o">(</span>statisticsEngine, choice<span class="s1">', array('</span>choices<span class="s1">' =&gt; $statisticsEngines)));</span>
+<span class="s1">  -        $this-&gt;add(new CheckboxField('</span>enableExternalLinks<span class="s1">'));</span>
+<span class="s1">  -        $this-&gt;add(new CheckboxField('</span>enableDir<span class="s1">'));</span>
+<span class="s1">  +        $this-&gt;add(enableExternalLinks, checkbox'</span><span class="o">))</span>;
+  +        <span class="nv">$this</span>-&gt;add<span class="o">(</span>enableDir, checkbox<span class="err">'</span><span class="o">))</span>;
+</pre></div>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Code Mover maintained by <a href="https://github.com/dantleech">dantleech</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
