@@ -99,6 +99,7 @@ class MigrationRunner
     public function migrate($files)
     {
         $modified = false;
+        $fileRepository = array();
 
         foreach ($this->getOrderedMigrators() as $migrator) {
             $this->logger->info(sprintf('<info>Running %s files thorugh migrator</info>: %s', count($files), $migrator->getName()));
@@ -106,7 +107,11 @@ class MigrationRunner
             foreach ($files as $file) {
                 $this->logger->debug(sprintf('<comment>Processing file</comment>: %s', $file->getRealPath()));
 
-                $moverFile = $this->fileFactory->getFile($file);
+                if (isset($fileRepository[$file->getRealPath()])) {
+                    $moverFile = $fileRepository[$file->getRealPath()];
+                } else {
+                    $moverFile = $this->fileFactory->getFile($file);
+                }
 
                 $this->logger->debug('Created mover file');
                 $migratorContext = new MigratorContext($this->context, $moverFile);
@@ -144,6 +149,7 @@ class MigrationRunner
                         $this->logger->debug('  File modified, committing');
                         $modified = true;
                         $moverFile->commit();
+                        $fileRepository[$moverFile->getSplFileInfo()->getRealPath()] = $moverFile;
                         if (false === $this->options['dry_run']) {
                             $this->logger->debug('  Writing file');
                             $moverFile->write();

@@ -7,8 +7,8 @@ use DTL\CodeMover\AbstractFile;
 
 class MigratorContext
 {
-    protected $parameters = array();
     protected $todos = array();
+    protected $runnerContext;
 
     public function __construct(RunnerContext $runnerContext, AbstractFile $file)
     {
@@ -25,22 +25,20 @@ class MigratorContext
     {
         return $this->runnerContext;
     }
-    
+
+    public function getParameters() 
+    {
+        return $this->runnerContext->getParameters();
+    }
 
     public function getParameter($name) 
     {
-        if (!isset($this->parameters[$name])) {
-            throw new \Exception(sprintf(
-                'Could not find parameters with name "%s"', $name
-            ));
-        }
-
-        return $this->parameters[$name];
+        return $this->runnerContext->getParameter($name);
     }
     
     public function setParameter($name, $value)
     {
-        $this->parameters[$name] = $value;
+        return $this->runnerContext->setParameter($name, $value);
     }
 
     public function addTodo($message)

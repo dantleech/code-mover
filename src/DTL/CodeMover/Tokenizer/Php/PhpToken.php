@@ -10,7 +10,7 @@ class PhpToken
     protected $tokenType;
     protected $tokenValue;
 
-    public function __construct(Line $line, $tokenType, $tokenValue)
+    public function __construct(Line $line = null, $tokenType, $tokenValue)
     {
         $this->line = $line;
         $this->tokenType = $tokenType;

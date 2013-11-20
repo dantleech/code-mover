@@ -2,7 +2,7 @@
 
 namespace DTL\CodeMover;
 
-class RegExResult
+class RegExResult implements \ArrayAccess
 {
     protected $matches;
 
@@ -26,5 +26,25 @@ class RegExResult
     public function getMatches()
     {
         return $this->matches;
+    }
+
+    public function offsetGet($offset) 
+    {
+        return $this->matches[$offset];
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->matches[$offset]);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        throw new \BadMethodCallException('RegExResult is readonly.');
+    }
+
+    public function offsetUnset($offset)
+    {
+        throw new \BadMethodCallException('RegExResult is readonly.');
     }
 }

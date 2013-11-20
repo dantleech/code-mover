@@ -5,6 +5,7 @@ namespace DTL\CodeMover\Tokenizer\Php;
 use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\Util;
 use DTL\CodeMover\LineCollection;
+use DTL\CodeMover\Tokenizer\Php\PhpToken;
 
 class PhpTokenList extends ArrayCollection
 {
@@ -19,8 +20,30 @@ class PhpTokenList extends ArrayCollection
         throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
     }
 
+    public function addRawTokenAfter(PhpToken $targetToken, $rawData)
+    {
+        $rawToken = new PhpToken(null, '_RAW', $rawData);
+        $newList = array();
+
+        foreach ($this as $token) {
+            $newList[] = $token;
+
+            if ($token === $targetToken) {
+                $newList[] = $rawToken;
+            }
+        }
+
+        $this->clear();
+        foreach ($newList as $token) {
+            $this->add($token);
+        }
+
+        return $this;
+    }
+
     public function seekValue($value)
     {
+        $this->position++;
         while ($this->offsetExists($this->position)) {
             $token = $this->offsetGet($this->position);
 
@@ -41,6 +64,8 @@ class PhpTokenList extends ArrayCollection
 
     public function seekType($type)
     {
+        $this->position++;
+
         $type = Util::tokenNormalizeTypeToString($type);
 
         while ($this->offsetExists($this->position)) {
@@ -198,5 +223,26 @@ class PhpTokenList extends ArrayCollection
         }
 
         return null;
+    }
+
+    public function trim($leftOffset, $rightAmount)
+    {
+        $tokenList = new PhpTokenList;
+        $i = 0;
+        $rightLimit = $this->count() - $rightAmount;
+
+        foreach ($this as $token) {
+            if ($i >= $leftOffset && $i < $rightLimit) {
+                $tokenList->add($token);
+            }
+            $i++;
+        }
+
+        return $tokenList;
+    }
+
+    public function __toString()
+    {
+        return implode("", $this->getValues());
     }
 }
