@@ -43,7 +43,6 @@ class PhpTokenList extends ArrayCollection
 
     public function seekValue($value)
     {
-        $this->position++;
         while ($this->offsetExists($this->position)) {
             $token = $this->offsetGet($this->position);
 
@@ -60,6 +59,12 @@ class PhpTokenList extends ArrayCollection
             $value,
             implode(",", $this->dump())
         ));
+    }
+
+    public function next()
+    {
+        $this->position++;
+        return $this;
     }
 
     public function seekType($type)
