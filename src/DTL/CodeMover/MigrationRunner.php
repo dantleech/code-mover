@@ -116,7 +116,9 @@ class MigrationRunner
                     $this->logger->debug(sprintf('<comment>Migrator "%s" rejects</comment>', $migrator->getName()));
                 } else {
                     $this->logger->debug(sprintf('<info>Migrator "%s" accepts, processing</info>', $migrator->getName()));
+
                     $migrator->migrate($migratorContext);
+
                     $this->logger->debug('  Done processing');
 
                     if ($this->options['show_diff']) {

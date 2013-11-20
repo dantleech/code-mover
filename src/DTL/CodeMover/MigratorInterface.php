@@ -2,7 +2,6 @@
 
 namespace DTL\CodeMover;
 
-use DTL\CodeMover\MoverFile;
 use DTL\CodeMover\MigratorContext;
 use DTL\CodeMover\AbstractFile;
 

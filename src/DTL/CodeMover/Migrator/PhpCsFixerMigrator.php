@@ -5,7 +5,7 @@ namespace DTL\CodeMover\Migrator;
 use Symfony\CS\Fixer;
 use DTL\CodeMover\MigratorContext;
 use DTL\CodeMover\AbstractMigrator;
-use DTL\CodeMover\MoverFile;
+use DTL\CodeMover\AbstractFile;
 
 class PhpCsFixerMigrator extends AbstractMigrator
 {
@@ -19,7 +19,7 @@ class PhpCsFixerMigrator extends AbstractMigrator
         return array();
     }
 
-    public function accepts(MoverFile $file)
+    public function accepts(AbstractFile $file)
     {
         return true;
     }

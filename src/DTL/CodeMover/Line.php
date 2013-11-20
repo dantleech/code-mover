@@ -124,7 +124,7 @@ class Line implements LineInterface
         $tokenList = new PhpTokenList();
 
         // need to add a php tag for tokenizer to work
-        $tokens = token_get_all('<?php '.$this->line);
+        $tokens = @token_get_all('<?php '.$this->line);
 
         // remove the php tag
         array_shift($tokens);

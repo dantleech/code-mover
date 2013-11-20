@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use DTL\CodeMover\Line;
 use Symfony\Component\Filesystem\Filesystem;
+use DTL\CodeMover\File\Php\PhpMethod;
 
 abstract class AbstractFile extends LineCollection
 {

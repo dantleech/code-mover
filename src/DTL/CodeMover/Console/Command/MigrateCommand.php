@@ -30,7 +30,7 @@ class MigrateCommand extends Command
             InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 
             'Path to migrate (can specify many', array('.')
         );
-        $this->addOption('name', null, InputOption::VALUE_REQUIRED, 'File basename to match', '*');
+        $this->addOption('name', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'File basename to match', array('*'));
         $this->addOption('dump', null, InputOption::VALUE_NONE, 'Dump each file (debug)');
         $this->addOption('fix-cs', null, InputOption::VALUE_NONE, 'Applies the fabpot CSS fixer');
         $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run');
@@ -50,7 +50,7 @@ class MigrateCommand extends Command
         $this->output = $output;
         $migrationsPath = $input->getArgument('migrations_path');
         $paths = $input->getOption('path');
-        $name = $input->getOption('name');
+        $names = $input->getOption('name');
         $dump = $input->getOption('dump');
         $fixCs = $input->getOption('fix-cs');
         $dryRun = $input->getOption('dry-run');
@@ -73,11 +73,14 @@ class MigrateCommand extends Command
         }
 
         $finder = new Finder;
-        $finder->name($name);
         $finder->files();
 
         if (!$paths) {
             $paths = array(__DIR__);
+        }
+
+        foreach ($names as $name) {
+            $finder->name($name);
         }
 
         foreach ($paths as $path) {
@@ -141,16 +144,13 @@ class MigrateCommand extends Command
 
         $migratorFiles = array();
         foreach ($finder as $file) {
+            $this->output->writeln('<comment>Found migrator: </comment>'.$file);
             $migratorFiles[] = $file;
+            include($file);
         }
 
-        $classes = get_declared_classes();
         foreach ($migratorFiles as $migratorFile) {
-            include $migratorFile;
-        }
-        $migratorClasses = array_diff(get_declared_classes(), $classes);
-
-        foreach ($migratorClasses as $migratorClass) {
+            $migratorClass = $this->getFqnForFile($migratorFile);
             $refl = new \ReflectionClass($migratorClass);
             if ($refl->isInstantiable()) {
                 $migrator = new $migratorClass;
@@ -163,5 +163,44 @@ class MigrateCommand extends Command
         }
 
         return $mRunner;
+    }
+
+    public function getFqnForFile(\SplFileInfo $file)
+    {
+        $handle = fopen($file->getRealPath(), 'r');
+
+        $namespace = null;
+        $className = null;
+
+        while ($line = fgets($handle)) {
+            if (!$namespace) {
+                preg_match('&namespace  (.*);&', $line, $matches);
+
+                if (isset($matches[1])) {
+                    $namespace = $matches[1];
+                }
+            }
+
+            if (!$className) {
+                preg_match('&class ([A-Za-z0-9]+)&', $line, $matches);
+
+                if (isset($matches[1])) {
+                    $className = $matches[1];
+                    break;
+                }
+            }
+        }
+
+        if (null === $className) {
+            throw new \InvalidArgumentException(sprintf('No class found in file %s', $file->getRealPath()));
+        }
+
+        if ($namespace) {
+            $fqn = sprintf('%s\\%s', $namespace, $className);
+        } else {
+            $fqn = $className;
+        }
+
+        return $fqn;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace DTL\CodeMover\Migrator;
 
-use DTL\CodeMover\MoverFile;
+use DTL\CodeMover\AbstractFile;
 use DTL\CodeMover\AbstractMigrator;
 use DTL\CodeMover\MigratorContext;
 
@@ -18,7 +18,7 @@ class CodeFormatMigrator extends AbstractMigrator
         return array();
     }
 
-    public function accepts(MoverFile $file)
+    public function accepts(AbstractFile $file)
     {
         return $file->nameMatches('/.*\.php/');
     }
@@ -32,7 +32,7 @@ class CodeFormatMigrator extends AbstractMigrator
         //$this->vimify($file);
     }
 
-    protected function vimify(MoverFile $file)
+    protected function vimify(AbstractFile $file)
     {
         $tmpfile = sys_get_temp_dir().DIRECTORY_SEPARATOR.'code_mover_vimify.'.$file->getSplFileInfo()->getExtension();
         file_put_contents($tmpfile, $file->getContent());
@@ -41,7 +41,7 @@ class CodeFormatMigrator extends AbstractMigrator
         $file->setContent($content);
     }
 
-    protected function beautify(MoverFile $file)
+    protected function beautify(AbstractFile $file)
     {
         $beautifier = new \PHP_Beautifier();
         $beautifier->setInputString($file->getContent());
@@ -51,7 +51,7 @@ class CodeFormatMigrator extends AbstractMigrator
         $file->setContent($beautifier->get());
     }
 
-    protected function fixNamespaceAndUse(MoverFile $file)
+    protected function fixNamespaceAndUse(AbstractFile $file)
     {
         $namespace = $file->findLine('namespace');
 
@@ -72,7 +72,7 @@ class CodeFormatMigrator extends AbstractMigrator
 
     }
 
-    public function fixExtraSpaces(MoverFile $file)
+    public function fixExtraSpaces(AbstractFile $file)
     {
         // ensure only single spaces
         $firstBlank = false;
@@ -107,7 +107,7 @@ class CodeFormatMigrator extends AbstractMigrator
         }
     }
 
-    public function fixIndentation(MoverFile $file)
+    public function fixIndentation(AbstractFile $file)
     {
         $i = 0;
         foreach ($file as $line) {
