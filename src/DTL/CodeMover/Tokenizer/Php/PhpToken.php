@@ -3,6 +3,7 @@
 namespace DTL\CodeMover\Tokenizer\Php;
 
 use DTL\CodeMover\Line;
+use DTL\CodeMover\LineInterface;
 
 class PhpToken
 {
@@ -10,11 +11,15 @@ class PhpToken
     protected $tokenType;
     protected $tokenValue;
 
-    public function __construct(Line $line = null, $tokenType, $tokenValue)
+    public function __construct($tokenType, $tokenValue)
     {
-        $this->line = $line;
         $this->tokenType = $tokenType;
         $this->tokenValue = $tokenValue;
+    }
+
+    public function setLine(LineInterface $line)
+    {
+        $this->line = $line;
     }
 
     public function getType()

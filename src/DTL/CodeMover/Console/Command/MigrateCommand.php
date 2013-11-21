@@ -174,7 +174,7 @@ class MigrateCommand extends Command
 
         while ($line = fgets($handle)) {
             if (!$namespace) {
-                preg_match('&namespace  (.*);&', $line, $matches);
+                preg_match('&namespace (.*);&', $line, $matches);
 
                 if (isset($matches[1])) {
                     $namespace = $matches[1];

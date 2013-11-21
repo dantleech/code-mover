@@ -5,6 +5,7 @@ namespace DTL\CodeMover;
 use DTL\CodeMover\Util;
 use DTL\CodeMover\Tokenizer\Php\PhpTokenList;
 use DTL\CodeMover\Tokenizer\Php\PhpToken;
+use DTL\CodeMover\LineInterface;
 
 class Line implements LineInterface
 {
@@ -136,13 +137,17 @@ class Line implements LineInterface
                     $tokenType = substr($tokenMap[$tokenType], 2);
                 }
 
-                $tokenList->add(new PhpToken($this, $tokenType, $tokenValue));
+                $token = new PhpToken($tokenType, $tokenValue);
+                $token->setLine($this);
+                $tokenList->add($token);
                 continue;
             }
 
-            $tokenList->add($token = new PhpToken($this, 'SINGLE_CHAR', $token));
+            $single = new PhpToken('SINGLE_CHAR', $token);
+            $single->setLine($this);
+            $tokenList->add($single);
 
-            if ($token->isEndOfStatement()) {
+            if ($single->isEndOfStatement()) {
                 break;
             }
         }

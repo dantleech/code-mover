@@ -6,8 +6,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\Util;
 use DTL\CodeMover\LineCollection;
 use DTL\CodeMover\Tokenizer\Php\PhpToken;
+use DTL\CodeMover\Tokenizer\TokenListInterface;
+use DTL\CodeMover\Tokenizer\TokenInterface;
+use DTL\CodeMover\LineInterface;
 
-class PhpTokenList extends ArrayCollection
+class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenInterface
 {
     protected $position = 0;
 
@@ -85,7 +88,7 @@ class PhpTokenList extends ArrayCollection
         ));
     }
 
-    public function subtract(PhpTokenList $tokenList)
+    public function subtract(TokenListInterface $tokenList)
     {
         $currentList = clone $this;
         $this->clear();
@@ -151,6 +154,7 @@ class PhpTokenList extends ArrayCollection
     public function filterByType($type)
     {
         $type = Util::tokenNormalizeTypeToString($type);
+
         return $this->filter(function ($el) use ($type) {
             if ($el->getType() == $type) {
                 return true;
@@ -297,5 +301,35 @@ class PhpTokenList extends ArrayCollection
     public function __toString()
     {
         return implode("", $this->getValues());
+    }
+
+    public function setValue($value)
+    {
+        $this->getToken()->setValue();
+    }
+
+    public function getValue()
+    {
+        return $this->getToken()->getValue();
+    }
+
+    public function getType()
+    {
+        return $this->getToken()->getType();
+    }
+
+    public function getLine()
+    {
+        return $this->getToken()->getLine();
+    }
+
+    public function setLine(LineInterface $line)
+    {
+        throw new \BadMethodCallException('Cannot call setLine on TokenList');
+    }
+
+    public function setType($type)
+    {
+        throw new \BadMethodCallException('Cannot call setType on TokenList');
     }
 }

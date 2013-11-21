@@ -11,9 +11,12 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     {
         $this->line = $this->getMockBuilder('DTL\CodeMover\Line')
             ->disableOriginalConstructor()->getMock();
-        $this->t1 = new PhpToken($this->line, 'FOOBAR', 'arf');
-        $this->t2 = new PhpToken($this->line, 'WHITESPACE', 'barf');
-        $this->t3 = new PhpToken($this->line, 'FOOBAR', 'garf');
+        $this->t1 = new PhpToken('FOOBAR', 'arf');
+        $this->t1->setLine($this->line);
+        $this->t2 = new PhpToken('WHITESPACE', 'barf');
+        $this->t2->setLine($this->line);
+        $this->t3 = new PhpToken('FOOBAR', 'garf');
+        $this->t3->setLine($this->line);
     }
 
     public function testFilterByType()
