@@ -20,6 +20,12 @@ class PhpTokenList extends ArrayCollection
         throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
     }
 
+    public function reset()
+    {
+        $this->position = 0;
+        return $this;
+    }
+
     public function addRawTokenAfter(PhpToken $targetToken, $rawData)
     {
         $rawToken = new PhpToken(null, '_RAW', $rawData);
@@ -56,9 +62,41 @@ class PhpTokenList extends ArrayCollection
         throw new \RuntimeException(sprintf(
             'Could not find token with value "%s", I have: "%s"',
             print_r($value, true),
-            $value,
             implode(",", $this->dump())
         ));
+    }
+
+    public function seekEncapsedString($value)
+    {
+        while ($this->offsetExists($this->position)) {
+            $token = $this->offsetGet($this->position);
+
+            if ($value == substr($token->getValue(), 1, -1)) {
+                return $this;
+            }
+
+            $this->position++;
+        }
+
+        throw new \RuntimeException(sprintf(
+            'Could not find token with value "%s", I have: "%s"',
+            print_r($value, true),
+            implode(",", $this->dump())
+        ));
+    }
+
+    public function subtract(PhpTokenList $tokenList)
+    {
+        $currentList = clone $this;
+        $this->clear();
+
+        foreach ($currentList as $token) {
+            if (false === $tokenList->has($token)) {
+                $this->add($token);
+            }
+        }
+
+        return $this;
     }
 
     public function next()
@@ -86,7 +124,6 @@ class PhpTokenList extends ArrayCollection
         throw new \RuntimeException(sprintf(
             'Could not find token with type "%s", I have: "%s"',
             print_r($type, true),
-            $type ? : '**any**',
             implode(",", $this->dump())
         ));
     }
@@ -196,6 +233,17 @@ class PhpTokenList extends ArrayCollection
         }
 
         return null;
+    }
+
+    public function has(PhpToken $targetToken)
+    {
+        foreach ($this as $token) {
+            if ($token === $targetToken) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function findBetween($left, $right)

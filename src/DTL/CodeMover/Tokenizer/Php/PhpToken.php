@@ -27,6 +27,12 @@ class PhpToken
         return $this->tokenValue;
     }
 
+    public function setValue($value)
+    {
+        $this->tokenValue = $value;
+    }
+    
+
     public function getLine()
     {
         return $this->line;
