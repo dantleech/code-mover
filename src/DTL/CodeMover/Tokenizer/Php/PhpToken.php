@@ -32,6 +32,15 @@ class PhpToken
         return $this->tokenValue;
     }
 
+    public function getDecapsedValue()
+    {
+        if ($this->tokenType == T_ENCAPSED_STRING) {
+            return substr($this->tokenValue, 1, -1);
+        }
+
+        return $this->tokenValue;
+    }
+
     public function setValue($value)
     {
         $this->tokenValue = $value;

@@ -13,6 +13,14 @@ use DTL\CodeMover\LineInterface;
 class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenInterface
 {
     protected $position = 0;
+    protected $bomb = true;
+
+    protected function throwException(\Exception $e)
+    {
+        if ($this->bomb) {
+            throw $e;
+        }
+    }
 
     public function getToken()
     {
@@ -20,7 +28,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             return $this->offsetGet($this->position);
         }
 
-        throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
+        $this->throwException(new \RuntimeException(sprintf('No token found at offset "%d"', $this->position)));
     }
 
     public function reset()
@@ -62,11 +70,13 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             $this->position++;
         }
 
-        throw new \RuntimeException(sprintf(
+        $this->throwException(new \RuntimeException(sprintf(
             'Could not find token with value "%s", I have: "%s"',
             print_r($value, true),
             implode(",", $this->dump())
-        ));
+        )));
+
+        return $this;
     }
 
     public function seekEncapsedString($value)
@@ -81,11 +91,13 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             $this->position++;
         }
 
-        throw new \RuntimeException(sprintf(
+        $this->throwException(new \RuntimeException(sprintf(
             'Could not find token with value "%s", I have: "%s"',
             print_r($value, true),
             implode(",", $this->dump())
-        ));
+        )));
+
+        return $this;
     }
 
     public function subtract(TokenListInterface $tokenList)
@@ -124,11 +136,11 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             $this->position++;
         }
 
-        throw new \RuntimeException(sprintf(
+        $this->throwException(new \RuntimeException(sprintf(
             'Could not find token with type "%s", I have: "%s"',
             print_r($type, true),
             implode(",", $this->dump())
-        ));
+        )));
     }
 
     public function dump()
@@ -151,27 +163,39 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $tokens;
     }
 
-    public function filterByType($type)
+    public function filter(\Closure $closure)
+    {
+        $tokenList = new PhpTokenList;
+        foreach ($this as $el) {
+            if ($closure($el)) {
+                $tokenList[] = $el;
+            }
+        }
+
+        return $tokenList;
+    }
+
+    public function filterByType($type, $invert = false)
     {
         $type = Util::tokenNormalizeTypeToString($type);
 
-        return $this->filter(function ($el) use ($type) {
+        return $this->filter(function ($el) use ($type, $invert) {
             if ($el->getType() == $type) {
-                return true;
+                return $invert ? false : true;
             }
 
-            return false;
+            return $invert ? true : false;
         });
     }
 
-    public function filterByValue($value)
+    public function filterByValue($value, $invert)
     {
-        return $this->filter(function ($el) use ($value) {
+        return $this->filter(function ($el) use ($value, $invert) {
             if ($el->getValue() == $value) {
-                return true;
+                return $invert ? false : true;
             }
 
-            return false;
+            return $invert ? true : false;
         });
     }
 
@@ -331,5 +355,49 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
     public function setType($type)
     {
         throw new \BadMethodCallException('Cannot call setType on TokenList');
+    }
+
+    public function bomb($boolean)
+    {
+        $this->bomb = $boolean;
+        return $this;
+    }
+
+    public function checkAhead($offset = 1)
+    {
+        return $this->offsetGet($this->position + $offset);
+    }
+
+    public function hasToken()
+    {
+        return $this->offsetExists($this->position);
+    }
+
+    public function castArray()
+    {
+        if ($this->getType() != 'ARRAY') {
+            throw new \InvalidArgumentException(
+                'Current token must be of type T_ARRAY to use the toArray method. Currently on ' . $this->getType()
+            );
+        }
+
+        $tokens = $this->findBetween('(', ')')->filterByType(T_WHITESPACE, true)->trim(1, 1)->filterByValue(',', true);
+
+        $ret = array();
+
+        do {
+            $key = $tokens->getValue();
+            $next = $tokens->checkAhead();
+            if ($next && $next->getType() == 'DOUBLE_ARROW') {
+                $value = $tokens->next()->next()->getValue();
+                $ret[$key] = $value;
+            } else {
+                $ret[] = $key;
+            }
+
+            $tokens->next();
+        } while ($tokens->hasToken());
+
+        return $ret;
     }
 }
