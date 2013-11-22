@@ -12,6 +12,8 @@ use DTL\CodeMover\LineInterface;
 
 class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenInterface
 {
+    const TOKEN_TYPE_RAW = '_RAW_';
+
     protected $position = 0;
     protected $bomb = true;
 
@@ -37,9 +39,9 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $this;
     }
 
-    public function addRawTokenAfter(PhpToken $targetToken, $rawData)
+    public function addRawTokenAfter(PhpToken $targetToken = null, $rawData)
     {
-        $rawToken = new PhpToken(null, '_RAW', $rawData);
+        $rawToken = new PhpToken(self::TOKEN_TYPE_RAW, $rawData);
         $newList = array();
 
         foreach ($this as $token) {
@@ -55,6 +57,13 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             $this->add($token);
         }
 
+        return $this;
+    }
+
+    public function addRawToken($rawData)
+    {
+        $rawToken = new PhpToken(self::TOKEN_TYPE_RAW, $rawData);
+        $this->add($rawToken);
         return $this;
     }
 
@@ -188,7 +197,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         });
     }
 
-    public function filterByValue($value, $invert)
+    public function filterByValue($value, $invert = false)
     {
         return $this->filter(function ($el) use ($value, $invert) {
             if ($el->getValue() == $value) {

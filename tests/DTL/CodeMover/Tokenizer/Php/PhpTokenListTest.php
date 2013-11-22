@@ -18,37 +18,46 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
         $this->t2->setLine($this->line);
         $this->t3 = new PhpToken('FOOBAR', 'garf');
         $this->t3->setLine($this->line);
+
+        $this->threeTokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
     }
 
     public function testFilterByType()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $tokenList = $tokenList->filterByType('FOOBAR');
+        $tokenList2 = $this->threeTokenList->filterByType('FOOBAR');
 
-        $this->assertEquals(array($this->t1, $this->t3), array_values($tokenList->toArray()));
+        $this->assertCount(2, $tokenList2);
+        $this->assertEquals(array($this->t1, $this->t3), $tokenList2->toArray());
+
+        // invert the filter
+        $tokenList3 = $this->threeTokenList->filterByType('FOOBAR', true);
+        $this->assertCount(1, $tokenList3);
+        $this->assertEquals(array($this->t2), $tokenList3->toArray());
     }
 
-    public function testValuesByType()
+    public function testFilterByValue()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $values = $tokenList->getValuesByType('FOOBAR');
+        $tokenList2 = $this->threeTokenList->filterByType('FOOBAR');
 
-        $this->assertEquals(array(
-            'arf', 'garf'
-        ), $values);
+        $this->assertCount(2, $tokenList2);
+        $this->assertEquals(array($this->t1, $this->t3), $tokenList2->toArray());
+
+        // invert the filter
+        $tokenList3 = $this->threeTokenList->filterByType('FOOBAR', true);
+        $this->assertCount(1, $tokenList3);
+        $this->assertEquals(array($this->t2), $tokenList3->toArray());
     }
+
 
     public function testSeekType()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->seekType(T_WHITESPACE)->getToken();
+        $token = $this->threeTokenList->seekType(T_WHITESPACE)->getToken();
         $this->assertEquals('barf', $token->getValue());
     }
 
     public function testSeekValue()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->seekValue('barf')->getToken();
+        $token = $this->threeTokenList->seekValue('barf')->getToken();
         $this->assertEquals('WHITESPACE', $token->getType());
     }
 
@@ -58,8 +67,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
      */
     public function testSeekValueNotFound()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $tokenList->seekValue('NOTKNOWN');
+        $this->threeTokenList->seekValue('NOTKNOWN');
     }
 
     /**
@@ -68,14 +76,12 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
      */
     public function testSeekTypeNotFound()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $tokenList->seekType('NOTKNOWN');
+        $this->threeTokenList->seekType('NOTKNOWN');
     }
 
     public function testLines()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $lines = $tokenList->getLines();
+        $lines = $this->threeTokenList->getLines();
         $this->assertNotNull($lines);
         $this->assertCount(1, $lines);
         $this->assertSame($this->line, $lines->first());
@@ -83,8 +89,7 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
 
     public function testToken()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $token = $tokenList->getToken();
+        $token = $this->threeTokenList->getToken();
         $this->assertSame($token, $this->t1);
     }
 
@@ -100,15 +105,13 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
 
     public function testGetValue()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $value = $tokenList->seekType(T_WHITESPACE)->getValue();
+        $value = $this->threeTokenList->seekType(T_WHITESPACE)->getValue();
         $this->assertEquals('barf', $value);
     }
 
     public function testGetType()
     {
-        $tokenList = new PhpTokenList(array($this->t1, $this->t2, $this->t3));
-        $type = $tokenList->getType();
+        $type = $this->threeTokenList->getType();
         $this->assertEquals('FOOBAR', $type);
     }
 
@@ -157,6 +160,24 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
         $res = $tokens->castArray();
 
         $this->assertEquals($expected, $res);
+    }
+
+    public function testAddRawToken()
+    {
+        $tokenList = new PhpTokenList;
+        $tokenList->addRawToken('foobar');
+        $tokenList->addRawToken('barfoo');
+
+        $this->assertEquals('foobarbarfoo', (string) $tokenList);
+    }
+
+    public function testAddRawTokenAfter()
+    {
+        $this->threeTokenList->addRawTokenAfter(
+            $this->t1, 'This IS Raw'
+        );
+
+        $this->assertEquals('This IS Raw', $this->threeTokenList->offsetGet(1)->getValue());
     }
 }
 
