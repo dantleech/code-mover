@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\Util;
 use DTL\CodeMover\LineCollection;
 use DTL\CodeMover\Tokenizer\Php\PhpToken;
+use DTL\CodeMover\Tokenizer\Php\PhpArray;
 use DTL\CodeMover\Tokenizer\TokenListInterface;
 use DTL\CodeMover\Tokenizer\TokenInterface;
 use DTL\CodeMover\LineInterface;
@@ -30,7 +31,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             return $this->offsetGet($this->position);
         }
 
-        $this->throwException(new \RuntimeException(sprintf('No token found at offset "%d"', $this->position)));
+        throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
     }
 
     public function reset()
@@ -39,7 +40,21 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $this;
     }
 
+    public function addToken($type, $value = null)
+    {
+        if ($type instanceof PhpToken) {
+            $token = $type;
+        } else {
+            $token = new PhpToken($type, $value);
+        }
+
+        $this->add($token);
+
+        return $this;
+    }
+
     public function addRawTokenAfter(PhpToken $targetToken = null, $rawData)
+
     {
         $rawToken = new PhpToken(self::TOKEN_TYPE_RAW, $rawData);
         $newList = array();
@@ -69,10 +84,10 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
 
     public function seekValue($value)
     {
-        while ($this->offsetExists($this->position)) {
-            $token = $this->offsetGet($this->position);
+        $originalPosition = $this->position;
 
-            if ($value == $token->getValue()) {
+        while ($this->hasToken()) {
+            if ($value == $this->getToken()->getValue()) {
                 return $this;
             }
 
@@ -84,6 +99,8 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             print_r($value, true),
             implode(",", $this->dump())
         )));
+
+        $this->position = $originalPosition;
 
         return $this;
     }
@@ -131,14 +148,14 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
 
     public function seekType($type)
     {
+        $originalPosition = $this->position;
+
         $this->position++;
 
         $type = Util::tokenNormalizeTypeToString($type);
 
-        while ($this->offsetExists($this->position)) {
-            $token = $this->offsetGet($this->position);
-
-            if ($type == $token->getType()) {
+        while ($this->hasToken()) {
+            if ($type == $this->getToken()->getType()) {
                 return $this;
             }
 
@@ -150,6 +167,8 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             print_r($type, true),
             implode(",", $this->dump())
         )));
+
+        $this->position = $originalPosition;
     }
 
     public function dump()
@@ -312,7 +331,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
             $this->position++;
         }
 
-        return null;
+        return $tokenList;
     }
 
     public function trim($leftOffset, $rightAmount)
@@ -384,29 +403,18 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
 
     public function castArray()
     {
+        $array = new PhpArray();
+
         if ($this->getType() != 'ARRAY') {
-            throw new \InvalidArgumentException(
+            $this->throwException(new \InvalidArgumentException(
                 'Current token must be of type T_ARRAY to use the toArray method. Currently on ' . $this->getType()
-            );
+            ));
+
+            return $array;
         }
 
-        $tokens = $this->findBetween('(', ')')->filterByType(T_WHITESPACE, true)->trim(1, 1)->filterByValue(',', true);
+        $array->loadTokenList($this);
 
-        $ret = array();
-
-        do {
-            $key = $tokens->getValue();
-            $next = $tokens->checkAhead();
-            if ($next && $next->getType() == 'DOUBLE_ARROW') {
-                $value = $tokens->next()->next()->getValue();
-                $ret[$key] = $value;
-            } else {
-                $ret[] = $key;
-            }
-
-            $tokens->next();
-        } while ($tokens->hasToken());
-
-        return $ret;
+        return $array;
     }
 }

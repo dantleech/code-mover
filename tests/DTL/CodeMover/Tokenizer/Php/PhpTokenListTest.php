@@ -53,12 +53,25 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
     {
         $token = $this->threeTokenList->seekType(T_WHITESPACE)->getToken();
         $this->assertEquals('barf', $token->getValue());
+
+        // If bomb is false then the position should be reset when
+        // a token is not found.
+        $currentToken = $this->threeTokenList->getToken();
+        $this->threeTokenList->bomb(false)->seekType('ASD');
+        $this->assertSame($currentToken, $this->threeTokenList->getToken());
+
     }
 
     public function testSeekValue()
     {
         $token = $this->threeTokenList->seekValue('barf')->getToken();
         $this->assertEquals('WHITESPACE', $token->getType());
+
+        // If bomb is false then the position should be reset when
+        // a token is not found.
+        $currentToken = $this->threeTokenList->getToken();
+        $this->threeTokenList->bomb(false)->seekValue('ASD');
+        $this->assertSame($currentToken, $this->threeTokenList->getToken());
     }
 
     /**
@@ -136,30 +149,12 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
         $tokenList->bomb($bomb)->seekValue('asdasdasd');
     }
 
-    public function provideCastArray()
+    public function testCastArray()
     {
-        return array(
-            array('array(\'foobar\' => "barfoo", $foobar => $poovar);', array(
-                '\'foobar\'' => '"barfoo"',
-                '$foobar' => '$poovar',
-            )),
-            array('array(\'foobar\', "barfoo", $foobar, $poovar);', array(
-                '\'foobar\'', '"barfoo"', '$foobar', '$poovar',
-            )),
-        );
-    }
-
-    /**
-     * @dataProvider provideCastArray
-     */
-    public function testCastArray($line, $expected)
-    {
-        $lineCollection = new LineCollection;
-        $line = new Line($lineCollection, $line);
-        $tokens = $line->tokenize();
-        $res = $tokens->castArray();
-
-        $this->assertEquals($expected, $res);
+        $list = new PhpTokenList();
+        $list->addToken('ARRAY', 'array');
+        $res = $list->bomb(false)->castArray();
+        $this->assertInstanceOf('DTL\CodeMover\Tokenizer\Php\PhpArray', $res);
     }
 
     public function testAddRawToken()
@@ -178,6 +173,21 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertEquals('This IS Raw', $this->threeTokenList->offsetGet(1)->getValue());
+    }
+
+    public function testAddToken()
+    {
+        // add real token
+        $l = new PhpTokenList;
+        $l->addToken($this->t1);
+
+        $this->assertSame($this->t1, $l->getToken());
+
+        // test adding from string valuees
+        $l = new PhpTokenList;
+        $l->addToken(T_WHITESPACE, ' ');
+
+        $this->assertSame(' ', $l->getToken()->getValue());
     }
 }
 
