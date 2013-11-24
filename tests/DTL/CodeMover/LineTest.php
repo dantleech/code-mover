@@ -48,10 +48,11 @@ class LineTest extends \PHPUnit_Framework_TestCase
     {
         $line = new Line($this->moverFile, $line);
         $res = $line->match($pattern);
-
         $matches = $res->getMatches();
+
         $this->assertNotNull($matches);
         $this->assertEquals($expectedMatches, $matches);
+        $this->assertSame($line, $res->getLine());
 
         foreach ($expectedMatches as $i => $expected) {
             $this->assertEquals($expected, $res->getMatch($i));
@@ -85,7 +86,7 @@ class LineTest extends \PHPUnit_Framework_TestCase
     {
         $line = new Line($this->moverFile, 'This is a line');
         $this->moverFile->expects($this->once())
-            ->method('removeElement')
+            ->method('remove')
             ->with($line)
             ->will($this->returnValue(true));
         $res = $line->delete();

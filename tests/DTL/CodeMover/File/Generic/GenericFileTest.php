@@ -80,7 +80,7 @@ class GenericFileTest extends \PHPUnit_Framework_TestCase
     public function testFindLines($pattern, $nbLines)
     {
         // find first
-        $firstLine = $this->file->findLine($pattern)->unwrap();
+        $firstLine = $this->file->findLine($pattern)->getSingle();
 
         $coll = $this->file->findLines($pattern);
         $this->assertEquals($nbLines, $coll->count());

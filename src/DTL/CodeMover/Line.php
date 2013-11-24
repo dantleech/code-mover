@@ -34,7 +34,9 @@ class Line implements LineInterface
             $match = preg_match($pattern, $this->line, $matches);
 
             if ($match) {
-                return new RegExResult($matches);
+                $res = new RegExResult($matches);
+                $res->setLine($this);
+                return $res;
             }
         }
 
@@ -48,7 +50,7 @@ class Line implements LineInterface
 
     public function getLineNo()
     {
-        return $this->file->indexOf($this) + 1;
+        return $this->file->keyOf($this) + 1;
     }
 
     public function replace($patterns, $replacements)
@@ -105,7 +107,7 @@ class Line implements LineInterface
 
     public function delete()
     {
-        if (!$this->file->removeElement($this)) {
+        if (!$this->file->remove($this)) {
             throw new \RuntimeException('Could not delete element');
         }
 
@@ -177,7 +179,7 @@ class Line implements LineInterface
     /**
      * Tokenize until the number of $leftString equals the number of $rightString
      */
-    public function tokenizeBetween($leftString, $rightString)
+    public function tokenizeBetween($leftString, $rightString = null)
     {
         $tokenList = new PhpTokenList();
         $line = $this;
@@ -191,7 +193,8 @@ class Line implements LineInterface
                 }
             }
 
-            if (null !== $betweenList = $tokenList->rewind()->findBetween($leftString, $rightString)) {
+            $betweenList = $tokenList->rewind()->findBetween($leftString, $rightString);
+            if (0 !== $betweenList->count()) {
                 return $betweenList;
             }
 

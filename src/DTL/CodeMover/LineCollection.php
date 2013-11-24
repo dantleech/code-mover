@@ -4,8 +4,10 @@ namespace DTL\CodeMover;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\Tokenizer\Php\PhpTokenList;
+use DTL\CodeMover\AbstractCollection;
+use DTL\CodeMover\Line;
 
-class LineCollection extends ArrayCollection implements LineInterface
+class LineCollection extends AbstractCollection implements LineInterface
 {
     public function match($patterns)
     {
@@ -47,8 +49,8 @@ class LineCollection extends ArrayCollection implements LineInterface
 
     public function delete()
     {
-        foreach ($this as $line) {
-            $line->delete();
+        foreach ($this->elements as $el) {
+            $el->delete();
         }
 
         return $this;
@@ -125,7 +127,7 @@ class LineCollection extends ArrayCollection implements LineInterface
      */
     public function tokenizeBetween($leftString, $rightString)
     {
-        foreach ($this as $line) {
+        foreach ($this->elements as $line) {
             return $line->tokenizeBetween($leftString, $rightString);
         }
 
@@ -141,23 +143,6 @@ class LineCollection extends ArrayCollection implements LineInterface
         }
 
         return $this;
-    }
-
-    protected function assertSingleElement($method)
-    {
-        if ($this->count() > 1) {
-            throw new \RuntimeException(sprintf('Method "%s" requires a single element, this collection of lines contains "%s"',
-                $method, $this->count()
-            ));
-        }
-    }
-
-    public function unwrap()
-    {
-        $this->assertSingleElement(__METHOD__);
-        foreach ($this as $line) {
-            return $line;
-        }
     }
 
     public function nextLine()
@@ -187,7 +172,7 @@ class LineCollection extends ArrayCollection implements LineInterface
 
     public function addLines($lines, $offset = null)
     {
-        $offset = $offset === null ? '-1' : $offset;
+        $offset = $offset === null ? -1 : $offset;
 
         $newLines = array();
 
@@ -215,7 +200,7 @@ class LineCollection extends ArrayCollection implements LineInterface
         $this->clear();
 
         foreach ($newLines as $newLine) {
-            $this->add($newLine);
+            $this->elements[] = $newLine;
         }
 
         return $this;
@@ -223,31 +208,31 @@ class LineCollection extends ArrayCollection implements LineInterface
 
     public function addLinesAfter(LineInterface $targetLine, $lines)
     {
-        $offset = $this->indexOf($targetLine->getSingle());
+        $offset = $this->keyOf($targetLine);
         $this->addLines($lines, $offset + 1);
     }
 
     public function addLinesBefore(LineInterface $targetLine, $lines)
     {
-        $offset = $this->indexOf($targetLine->getSingle());
+        $offset = $this->keyOf($targetLine->getSingle());
         $this->addLines($lines, $offset);
     }
 
     public function addLineAfter(LineInterface $targetLine, $line)
     {
-        $offset = $this->indexOf($targetLine->getSingle());
+        $offset = $this->keyOf($targetLine->getSingle());
         $this->addLinesAfter($targetLine, array($line), $offset + 1);
     }
 
     public function addLineBefore(LineInterface $targetLine, $line)
     {
-        $offset = $this->indexOf($targetLine->getSingle());
+        $offset = $this->keyOf($targetLine->getSingle());
         $this->addLinesBefore($targetLine, array($line));
     }
 
     public function getLineNeighbor(Line $line, $before = false)
     {
-        $index = $this->indexOf($line);
+        $index = $this->keyOf($line);
         if ($before) {
             --$index;
         } else {
@@ -259,11 +244,5 @@ class LineCollection extends ArrayCollection implements LineInterface
         }
 
         return null;
-    }
-
-    public function getSingle()
-    {
-        $this->assertSingleElement(__METHOD__);
-        return $this->first();
     }
 }

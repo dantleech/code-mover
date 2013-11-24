@@ -2,7 +2,6 @@
 
 namespace DTL\CodeMover\Tokenizer\Php;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use DTL\CodeMover\Util;
 use DTL\CodeMover\LineCollection;
 use DTL\CodeMover\Tokenizer\Php\PhpToken;
@@ -10,19 +9,28 @@ use DTL\CodeMover\Tokenizer\Php\PhpArray;
 use DTL\CodeMover\Tokenizer\TokenListInterface;
 use DTL\CodeMover\Tokenizer\TokenInterface;
 use DTL\CodeMover\LineInterface;
+use DTL\CodeMover\AbstractCollection;
 
-class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenInterface
+class PhpTokenList extends AbstractCollection implements TokenListInterface, TokenInterface
 {
     const TOKEN_TYPE_RAW = '_RAW_';
 
-    protected $position = 0;
-    protected $bomb = true;
+    protected $bracketMap = array(
+        '{' => '}',
+        '(' => ')',
+        '[' => ']',
+    );
 
-    protected function throwException(\Exception $e)
+    protected function getClosingBracket($left)
     {
-        if ($this->bomb) {
-            throw $e;
+        if (!isset($this->bracketMap[$left])) {
+            throw new \InvalidArgumentException(sprintf(
+                'Cannot automatically determine closing bracket for "%s" - I only know: "%s"',
+                $left, implode(', ', array_keys($this->bracketMap))
+            ));
         }
+
+        return $this->bracketMap[$left];
     }
 
     public function getToken()
@@ -32,12 +40,6 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         }
 
         throw new \RuntimeException(sprintf('No token found at offset "%d"', $this->position));
-    }
-
-    public function reset()
-    {
-        $this->position = 0;
-        return $this;
     }
 
     public function addToken($type, $value = null)
@@ -86,12 +88,12 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
     {
         $originalPosition = $this->position;
 
-        while ($this->hasToken()) {
+        while ($this->valid()) {
             if ($value == $this->getToken()->getValue()) {
                 return $this;
             }
 
-            $this->position++;
+            $this->next();
         }
 
         $this->throwException(new \RuntimeException(sprintf(
@@ -114,7 +116,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
                 return $this;
             }
 
-            $this->position++;
+            $this->next();
         }
 
         $this->throwException(new \RuntimeException(sprintf(
@@ -126,26 +128,6 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $this;
     }
 
-    public function subtract(TokenListInterface $tokenList)
-    {
-        $currentList = clone $this;
-        $this->clear();
-
-        foreach ($currentList as $token) {
-            if (false === $tokenList->has($token)) {
-                $this->add($token);
-            }
-        }
-
-        return $this;
-    }
-
-    public function next()
-    {
-        $this->position++;
-        return $this;
-    }
-
     public function seekType($type)
     {
         $originalPosition = $this->position;
@@ -154,7 +136,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
 
         $type = Util::tokenNormalizeTypeToString($type);
 
-        while ($this->hasToken()) {
+        while ($this->valid()) {
             if ($type == $this->getToken()->getType()) {
                 return $this;
             }
@@ -191,18 +173,6 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $tokens;
     }
 
-    public function filter(\Closure $closure)
-    {
-        $tokenList = new PhpTokenList;
-        foreach ($this as $el) {
-            if ($closure($el)) {
-                $tokenList[] = $el;
-            }
-        }
-
-        return $tokenList;
-    }
-
     public function filterByType($type, $invert = false)
     {
         $type = Util::tokenNormalizeTypeToString($type);
@@ -230,22 +200,14 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
     public function getValuesByType($type)
     {
         $type = Util::tokenNormalizeTypeToString($type);
-
         $list = $this->filterByType($type);
+
         return $list->getValues();
-    }
-
-    public function rewind()
-    {
-        $this->position = 0;
-
-        return $this;
     }
 
     public function getValues()
     {
         $values = array();
-
         foreach ($this as $token) {
             $values[] = $token->getValue();
         }
@@ -257,7 +219,7 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
     {
         $lines = new LineCollection;
         foreach ($this as $token) {
-            if (!$lines->contains($token->getLine())) {
+            if (!$lines->has($token->getLine())) {
                 $lines->add($token->getLine());
             }
         }
@@ -265,8 +227,18 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return $lines;
     }
 
-    public function findMatchingEnd($left, $right)
+    /**
+     * Find the right matching token for a given left token value
+     *
+     * @param string $left - Value of left token
+     * @param string $right - (optional) Value of right token
+     */
+    public function findMatchingBracket($left, $right = null)
     {
+        if (null === $right) {
+            $right = $this->getClosingBracket($left);
+        }
+
         $leftCount = 0;
         $rightCount = 0;
 
@@ -291,26 +263,19 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
         return null;
     }
 
-    public function has(PhpToken $targetToken)
+    public function findBetween($left, $right = null)
     {
-        foreach ($this as $token) {
-            if ($token === $targetToken) {
-                return true;
-            }
+        if (null === $right) {
+            $right = $this->getClosingBracket($left);
         }
 
-        return false;
-    }
-
-    public function findBetween($left, $right)
-    {
         $leftCount = 0;
         $rightCount = 0;
 
         $tokenList = new PhpTokenList();
 
-        while ($this->offsetExists($this->position)) {
-            $token = $this->offsetGet($this->position);
+        while ($this->valid()) {
+            $token = $this->current();
 
             if ($token->getValue() == $left) {
                 $leftCount++;
@@ -328,26 +293,10 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
                 return $tokenList;
             }
 
-            $this->position++;
+            $this->next();
         }
 
-        return $tokenList;
-    }
-
-    public function trim($leftOffset, $rightAmount)
-    {
-        $tokenList = new PhpTokenList;
-        $i = 0;
-        $rightLimit = $this->count() - $rightAmount;
-
-        foreach ($this as $token) {
-            if ($i >= $leftOffset && $i < $rightLimit) {
-                $tokenList->add($token);
-            }
-            $i++;
-        }
-
-        return $tokenList;
+        return new PhpTokenList();
     }
 
     public function __toString()
@@ -383,22 +332,6 @@ class PhpTokenList extends ArrayCollection implements TokenListInterface, TokenI
     public function setType($type)
     {
         throw new \BadMethodCallException('Cannot call setType on TokenList');
-    }
-
-    public function bomb($boolean)
-    {
-        $this->bomb = $boolean;
-        return $this;
-    }
-
-    public function checkAhead($offset = 1)
-    {
-        return $this->offsetGet($this->position + $offset);
-    }
-
-    public function hasToken()
-    {
-        return $this->offsetExists($this->position);
     }
 
     public function castArray()

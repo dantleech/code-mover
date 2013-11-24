@@ -4,14 +4,14 @@ namespace DTL\CodeMover\Tokenizer\Php;
 
 class PhpArray implements \ArrayAccess
 {
-    protected $array;
+    protected $array = array();
 
     public function loadTokenList(PhpTokenList $tokenList)
     {
         $array = array();
         $tokens = $tokenList->seekValue('array')->findBetween('(', ')')->filterByType(T_WHITESPACE, true)->trim(1, 1)->filterByValue(',', true);
 
-        if (!$tokens->hasToken()) {
+        if (!$tokens->valid()) {
             $this->array = array();
             return $this;
         }
@@ -27,7 +27,7 @@ class PhpArray implements \ArrayAccess
             }
 
             $tokens->next();
-        } while ($tokens->hasToken());
+        } while ($tokens->valid());
 
         $this->array = $array;
 

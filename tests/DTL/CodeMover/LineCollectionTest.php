@@ -157,7 +157,10 @@ class LineCollectionTest extends \PHPUnit_Framework_TestCase
         $res = $lc->tokenizeBetween($left, $right);
 
         $this->assertNotNull($res);
-        $this->assertCount($expectedNb, $res);
+
+        if (is_numeric($expectedNb)) {
+            $this->assertCount($expectedNb, $res);
+        }
 
         if ($expectedNb > 0) {
             $this->assertEquals($right, $res->last()->getValue());
@@ -244,14 +247,3 @@ class LineCollectionTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($this->line1, $res);
     }
 }
-
-
-
-
-
-
-
-
-
-
-

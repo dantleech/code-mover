@@ -10,6 +10,7 @@ refactorings.
 
 ````php
 // app/CodeMoverMigrations/FormFieldMigrator.php
+// app/CodeMoverMigrations/FormFieldMigrator.php
 
 use DTL\CodeMover\AbstractMigrator;
 use DTL\CodeMover\MoverFile;
@@ -29,13 +30,15 @@ class FormFieldMigrator extends AbstractMigrator
         return array('namespaces');
     }
 
-    public function accepts(MoverFile $file)
+    public function accepts(AbstractFile $file)
     {
-        return $file->nameMatches('*Form.php');
+        return $file->nameMatches('\/[a-zA-Z0-9]+Form\.php*');
     }
 
-    public function migrate(MoverFile $file)
+    public function migrate(MigratorContext $context)
     {
+        $file = $this->context->getFile();
+
         $file->findLine('.*foobar.*')->replace('foobar', 'barfoo');
 
         $file->findLines(array(
@@ -47,7 +50,13 @@ class FormFieldMigrator extends AbstractMigrator
             ->replace('\$this->add\(new (.*?)Field\(\'(.*?)\'', function ($matches) {
                 $fieldType = strtolower($matches[1]);
                 return '$this->add('.$matches[2].', '.$fieldType.'\'';
-            });
+            })->each(function ($line) {
+
+                $line->match('(.*)foo(.*)')->apply(function($line, $match1, $match2) {
+                    // the apply closure is passed the matches from the regex
+                });
+            });;
+
     }
 }
 ````
@@ -58,6 +67,7 @@ The above migrator will:
 - Only process files matching the regex pattern `*Form.php`;
 - Delete all lines that match either `use .*Field;` or `use .*Group`
 - Will replace lines like `$this->add(new TextAreaField('field_name')` with `$this->add('field_name', 'textarea');`
+- etc
 
 You can run it on some code:
 

@@ -189,6 +189,17 @@ class PhpTokenListTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame(' ', $l->getToken()->getValue());
     }
+
+    public function testWith()
+    {
+        $tList = new PhpTokenList;
+        $me = $this;
+        $res = $tList->apply(function ($arg) use ($me, $tList) {
+            $me->assertSame($tList, $arg);
+        });
+
+        $this->assertSame($res, $tList);
+    }
 }
 
 

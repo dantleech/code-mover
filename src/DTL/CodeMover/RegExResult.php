@@ -2,40 +2,51 @@
 
 namespace DTL\CodeMover;
 
-class RegExResult implements \ArrayAccess
-{
-    protected $matches;
+use DTL\CodeMover\AbstractCollection;
 
-    public function __construct($matches)
+class RegExResult extends AbstractCollection
+{
+    protected $line;
+
+    public function setLine(LineInterface $line)
     {
-        $this->matches = $matches;
+        $this->line = $line;
+    }
+
+    public function getLine()
+    {
+        return $this->line;
+    }
+
+    public function dump()
+    {
+        return print_r($this->toArray(), true);
+    }
+
+    public function apply(\Closure $closure)
+    {
+        $args = array($this->line);
+        foreach ($this->trim(1, 0) as $match) {
+            $args[] = $match;
+        }
+        call_user_func_array($closure, $args);
     }
 
     public function getMatch($i)
     {
-        if (!isset($this->matches[$i])) {
+        if (!isset($this->elements[$i])) {
             throw new \InvalidArgumentException(sprintf(
-                'No matches for index "%s". Have: ',
-                $i, print_r($this->matches, true)
+                'No elements for index "%s". Have: ',
+                $i, print_r($this->elements, true)
             ));
         }
 
-        return $this->matches[$i];
+        return $this->elements[$i];
     }
 
     public function getMatches()
     {
-        return $this->matches;
-    }
-
-    public function offsetGet($offset) 
-    {
-        return $this->matches[$offset];
-    }
-
-    public function offsetExists($offset)
-    {
-        return isset($this->matches[$offset]);
+        return $this->elements;
     }
 
     public function offsetSet($offset, $value)
