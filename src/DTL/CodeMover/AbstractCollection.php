@@ -351,7 +351,8 @@ abstract class AbstractCollection implements \Countable, \ArrayAccess, \Iterator
      */
     public function first()
     {
-        return array_shift(array_values($this->toArray()));
+        $values = array_values($this->toArray());
+        return array_shift($values);
     }
 
     /**

@@ -29,8 +29,8 @@ class UtilTest extends \PHPUnit_Framework_TestCase
     public function provideTokenStringToInt()
     {
         return array(
-            array('WHITESPACE', 377),
-            array('T_WHITESPACE', 377),
+            array('WHITESPACE', T_WHITESPACE),
+            array('T_WHITESPACE', T_WHITESPACE),
             array('WXAXXSAHITESPACE', null, true),
         );
     }
