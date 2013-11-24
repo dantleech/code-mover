@@ -1,5 +1,7 @@
 # Code Mover
 
+[![Build Status](https://travis-ci.org/dantleech/code-mover.png?branch=master)](https://travis-ci.org/dantleech/code-mover)
+
 Small library for migrating code, its sort of analagous to database migrations
 but instead of applying changes to a database, you apply it to code.
 
@@ -47,16 +49,16 @@ class FormFieldMigrator extends AbstractMigrator
         ))->delete();
 
         $file->findLines('$this->add\(new .*?Field')
+            });;
+        $file->findLines('$this->add\(new .*?Field')
             ->replace('\$this->add\(new (.*?)Field\(\'(.*?)\'', function ($matches) {
                 $fieldType = strtolower($matches[1]);
                 return '$this->add('.$matches[2].', '.$fieldType.'\'';
             })->each(function ($line) {
-
-                $line->match('(.*)foo(.*)')->apply(function($line, $match1, $match2) {
-                    // the apply closure is passed the matches from the regex
-                });
-            });;
-
+                    $line->match('(.*)foo(.*)')->apply(function($line, $match1, $match2) {
+                        // the apply closure is passed the matches from the regex
+                    });
+                });;
     }
 }
 ````
@@ -67,7 +69,7 @@ The above migrator will:
 - Only process files matching the regex pattern `*Form.php`;
 - Delete all lines that match either `use .*Field;` or `use .*Group`
 - Will replace lines like `$this->add(new TextAreaField('field_name')` with `$this->add('field_name', 'textarea');`
-- etc
+  - Then apply a closure to each modified line
 
 You can run it on some code:
 
