@@ -2,17 +2,22 @@
 
 namespace DTL\CodeMover;
 
+use Symfony\Component\Finder\Expression\Regex;
+
 class Util
 {
-    const REGEX_DELIMITER = '/';
+    const REGEX_DELIMITER_OPEN = '{';
+    const REGEX_DELIMITER_CLOSE = '}';
 
     public static function delimitRegex($pattern)
     {
-        if (substr($pattern, 0, 1) == self::REGEX_DELIMITER ) {
-            return $pattern;
-        }
+        try {
+            Regex::create($pattern);
 
-        return self::REGEX_DELIMITER.$pattern.self::REGEX_DELIMITER;
+            return $pattern;
+        } catch (\InvalidArgumentException $e) {
+            return self::REGEX_DELIMITER_OPEN.$pattern.self::REGEX_DELIMITER_CLOSE;
+        }
     }
 
     public static function tokenTypeIntToString($type)

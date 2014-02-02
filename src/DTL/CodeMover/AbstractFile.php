@@ -4,6 +4,7 @@ namespace DTL\CodeMover;
 
 use DTL\CodeMover\Line;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Expression\Expression;
 use DTL\CodeMover\File\Php\PhpMethod;
 
 abstract class AbstractFile extends LineCollection
@@ -26,7 +27,7 @@ abstract class AbstractFile extends LineCollection
 
     public function nameMatches($pattern)
     {
-        $pattern = Util::delimitRegex($pattern);
+        $pattern = Expression::create($pattern)->getRegex()->render();
         return (boolean) preg_match($pattern, $this->file);
     }
 
