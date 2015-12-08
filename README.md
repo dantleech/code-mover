@@ -1,5 +1,7 @@
 # Code Mover
 
+**NOTE**: Do not use this library, it is not maintained and it is wrong.
+
 [![Build Status](https://travis-ci.org/dantleech/code-mover.png?branch=master)](https://travis-ci.org/dantleech/code-mover)
 
 Small library for migrating code, its sort of analagous to database migrations
